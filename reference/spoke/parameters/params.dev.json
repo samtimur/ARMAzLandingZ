@@ -1,0 +1,83 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "lzPrefix": {
+            "value": "spoke"
+        },
+        "location": {
+            "value": "australiaeast"
+        },
+        "envPrefix": {
+            "value": "dev"
+        },
+        "prefixes": {
+            "value": {
+                "resourceGroup": "arg",
+                "networkSecurityGroup": "nsg",
+                "virtualNetwork": "vnt",
+                "routeTable": "udr",
+                "keyVault": "akv",
+                "recoveryVault": "rsv"
+            }
+        },
+        "tags": {
+            "value": {
+                "applicationName": "notset",
+                "owner": "notset",
+                "businessCriticality": "notset",
+                "ownerEmail": "notset",
+                "costCenter": "notset",
+                "dataClassification": "notset"
+            }
+        },
+        "budgets": {
+            "value": [
+                {
+                    "amount": 1000,
+                    "timeGrain": "Monthly",
+                    "firstThreshold": 80,
+                    "secondThreshold": 100,
+                    "contactRoles": [
+                        "Owner",
+                        "Contributor"
+                    ],
+                    "contactEmails": [
+                        "stephen.tulp@outlook.com"
+                    ]
+                }
+            ]
+        },
+        "network": {
+            "value": [
+                {
+                    "vnetAddressPrefix": "10.1.0.0/16",
+                    "hubVnetId": "/subscriptions/8f8224ca-1a9c-46d1-9206-1cf2a7c51de8/resourceGroups/sjt-syd-cor-arg-network/providers/Microsoft.Network/virtualNetworks/sjt-syd-cor-vnt-10.49.0.0",
+                    "firewallPrivateIp": "10.0.0.4",
+                    "dnsServerAddresses": [
+                        "1.1.1.1",
+                        "2.2.2.2"
+                    ],
+                    "subnetArray": [
+                        {
+                            "name": "web",
+                            "addressPrefix": "10.1.0.0/24"
+                        },
+                        {
+                            "name": "apps",
+                            "addressPrefix": "10.1.1.0/24"
+                        },
+                        {
+                            "name": "data",
+                            "addressPrefix": "10.1.2.0/24"
+                        },
+                        {
+                            "name": "test",
+                            "addressPrefix": "10.1.3.0/24"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

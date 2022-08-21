@@ -1,0 +1,29 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "targetManagementGroupId": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide the ID of the management group that you want to move the subscription to."
+            }
+        },
+        "subscriptionId": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide the ID of the existing subscription to move."
+            }
+        }
+    },
+    "resources": [
+        {
+            "scope": "/",
+            "type": "Microsoft.Management/managementGroups/subscriptions",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('targetManagementGroupId'), '/', parameters('subscriptionId'))]",
+            "properties": {
+            }
+        }
+    ],
+    "outputs": {}
+}

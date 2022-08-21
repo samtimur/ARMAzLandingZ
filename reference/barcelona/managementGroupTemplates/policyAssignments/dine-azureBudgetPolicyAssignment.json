@@ -1,0 +1,94 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "topLevelManagementGroupPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide the company prefix to the root management group containing the policy definitions."
+            }
+        },
+        "enforcementMode": {
+            "type": "string",
+            "allowedValues": [
+                "Default",
+                "DoNotEnforce"
+            ],
+            "defaultValue": "Default"
+        }
+    },
+    "variables": {
+        "policyDefinitions": {
+            "deployBudget": "[concat('/providers/Microsoft.Management/managementGroups/', parameters('topLevelManagementGroupPrefix'), '/providers/Microsoft.Authorization/policyDefinitions/Deploy-Budget')]"
+        },
+        "policyAssignmentNames": {
+            "deployBudget": "Deploy-Azure-Budget",
+            "description": "Deploy a default budget on all subscriptions under the assigned scope",
+            "displayName": "Deploy a default budget on all subscriptions under the assigned scope"
+        },
+        "rbac": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+        "roleAssignmentNames": {
+            "deployBudget": "[guid(concat(parameters('topLevelManagementGroupPrefix'), variables('policyAssignmentNames').deployBudget))]"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('policyAssignmentNames').deployBudget]",
+            "location": "[deployment().location]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "description": "[variables('policyAssignmentNames').description]",
+                "displayName": "[variables('policyAssignmentNames').displayName]",
+                "policyDefinitionId": "[variables('policyDefinitions').deployBudget]",
+                "enforcementMode": "[parameters('enforcementMode')]",
+                "parameters": {
+                    "firstThreshold": {
+                        "value": "80"
+                    },
+                    "secondThreshold": {
+                        "value": "100"
+                    },
+                    "timeGrain": {
+                        "value": "Monthly"
+                    },
+                    "amount": {
+                        "value": "1000"
+                    },
+                    "contactEmails": {
+                        "value": [
+                            "stephen.tulp@outlook.com",
+                            "stephen.tulp@insight.com"
+                        ]
+                    },
+                    "contactGroups": {
+                        "value": []
+                    },
+                    "contactRoles": {
+                        "value": [
+                            "Owner",
+                            "Contributor"
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2019-04-01-preview",
+            "name": "[variables('roleAssignmentNames').deployBudget]",
+            "dependsOn": [
+                "[variables('policyAssignmentNames').deployBudget]"
+            ],
+            "properties": {
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[concat('/providers/Microsoft.Authorization/roleDefinitions/', variables('rbac'))]",
+                "principalId": "[reference(concat('/providers/Microsoft.Authorization/policyAssignments/', variables('policyAssignmentNames').deployBudget), '2019-09-01', 'Full' ).identity.principalId]"
+            }
+        }
+    ],
+    "outputs": {}
+}

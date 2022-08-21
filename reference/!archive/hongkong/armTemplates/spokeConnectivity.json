@@ -1,0 +1,417 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "companyPrefix": {
+            "type": "string"
+        },
+        "locationPrefix": {
+            "type": "string"
+        },
+        "subscriptionPrefix": {
+            "type": "string"
+        },
+        "argPrefix": {
+            "type": "string"
+        },
+        "vntPrefix": {
+            "type": "string"
+        },
+        "udrPrefix": {
+            "type": "string"
+        },
+        "nsgPrefix": {
+            "type": "string"
+        },
+        "subscriptionTag": {
+            "type": "string"
+        },
+        "ownerTag": {
+            "type": "string"
+        },
+        "costCenterTag": {
+            "type": "string"
+        },
+        "addressPrefix": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[deployment().location]"
+        },
+        "enableSpoke": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableUdr": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "hubFwIp": {
+            "type": "string"
+        },
+        "enableWeb": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableApp": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableData": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "spokeSubscriptionId": {
+            "type": "string",
+            "maxLength": 36,
+            "defaultValue": ""
+        },
+        "subnetMaskForWeb": {
+            "type": "string"
+        },
+        "subnetMaskForApp": {
+            "type": "string"
+        },
+        "subnetMaskForData": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "deploymentNames": {
+            "spokeNetwork": "[take(concat('spokeNetwork', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "networkWatcher": "[take(concat('networkWatcher', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]"
+        },
+        "namingPrefix": "[concat(parameters('companyPrefix'), '-', parameters('locationPrefix'), '-', parameters('subscriptionPrefix'))]",
+        "resourceGroups": {
+            "spokeNetwork": "[toLower(concat(variables('namingPrefix'), '-', parameters('argPrefix'), '-network'))]",
+            "networkWatcher": "NetworkWatcherRG"
+        },
+        "vnetAddressSpace": "[substring(parameters('addressPrefix'),0,sub(length(parameters('addressPrefix')), 3))]",
+        "vnetName": "[toLower(concat(variables('namingPrefix'), '-', parameters('vntPrefix'), '-', variables('vnetAddressSpace')))]",
+        "networkWatcher": "[toLower(concat(variables('namingPrefix'), '-anw-', parameters('location')))]",
+
+        "udrName": "[toLower(take(concat(variables('namingPrefix'), '-', parameters('udrPrefix'), '-', guid(parameters('companyPrefix'))), 24))]",
+        "udrRoute": "subnet-to-azureFirewall",
+        "udrId": "[concat('/subscriptions/', parameters('spokeSubscriptionId'), '/resourceGroups/', variables('resourceGroups').spokeNetwork,'/providers/Microsoft.Network/routeTables/', variables('udrName'))]",
+
+        "webSubnet": "web",
+        "webNsg": "[toLower(concat(variables('namingPrefix'), '-', parameters('nsgPrefix'), '-', variables('webSubnet')))]",
+        "webNsgId": "[concat('/subscriptions/', parameters('spokeSubscriptionId'), '/resourceGroups/', variables('resourceGroups').spokeNetwork,'/providers/Microsoft.Network/networkSecurityGroups/', variables('webNsg'))]",
+
+        "appsSubnet": "apps",
+        "appsNsg": "[toLower(concat(variables('namingPrefix'), '-', parameters('nsgPrefix'), '-', variables('appsSubnet')))]",
+        "appsNsgId": "[concat('/subscriptions/', parameters('spokeSubscriptionId'), '/resourceGroups/', variables('resourceGroups').spokeNetwork,'/providers/Microsoft.Network/networkSecurityGroups/', variables('appsNsg'))]",
+
+        "dataSubnet": "data",
+        "dataNsg": "[toLower(concat(variables('namingPrefix'), '-', parameters('nsgPrefix'), '-', variables('dataSubnet')))]",
+        "dataNsgId": "[concat('/subscriptions/', parameters('spokeSubscriptionId'), '/resourceGroups/', variables('resourceGroups').spokeNetwork,'/providers/Microsoft.Network/networkSecurityGroups/', variables('dataNsg'))]",
+
+        "apiVersions": {
+            "deployments": "2020-06-01",
+            "resourceGroups": "2020-06-01",
+            "locks": "2016-09-01",
+            "virtualNetworks": "2020-05-01",
+            "subnets": "2020-05-01",
+            "networkWatchers": "2019-11-01",
+            "networkSecurityGroups": "2020-05-01",
+            "routeTables": "2020-05-01"
+        },
+        "tags": {
+            "environment": "[parameters('subscriptionTag')]",
+            "owner": "[parameters('ownerTag')]",
+            "costCenter": "[parameters('costCenterTag')]"
+        }
+    },
+    "resources": [
+        {
+            "comments": "Conditional deployment for Azure Network Resources in the spoke subscription",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "name": "[variables('deploymentNames').spokeNetwork]",
+            "location": "[deployment().location]",
+            "subscriptionId": "[parameters('spokeSubscriptionId')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "resources": [
+                        {
+                            "comments": "Create Resource Group for Azure Network Resources",
+                            "condition": "[and(equals(parameters('enableSpoke'), 'Yes'), not(empty(parameters('spokeSubscriptionId'))))]",
+                            "type": "Microsoft.Resources/resourceGroups",
+                            "apiVersion": "[variables('apiVersions').resourceGroups]",
+                            "name": "[variables('resourceGroups').spokeNetwork]",
+                            "location": "[deployment().location]",
+                            "tags": {
+                                "environment": "[variables('tags').environment]",
+                                "owner": "[variables('tags').owner]",
+                                "costCenter": "[variables('tags').costCenter]"
+                            },
+                            "properties": {}
+                        },
+                        {
+                            "comments": "Create Resource Group for Network Watcher",
+                            "condition": "[and(equals(parameters('enableSpoke'), 'Yes'), not(empty(parameters('spokeSubscriptionId'))))]",
+                            "type": "Microsoft.Resources/resourceGroups",
+                            "apiVersion": "[variables('apiVersions').resourceGroups]",
+                            "location": "[parameters('location')]",
+                            "name": "[variables('resourceGroups').networkWatcher]",
+                            "tags": {
+                                "environment": "[variables('tags').environment]",
+                                "owner": "[variables('tags').owner]",
+                                "costCenter": "[variables('tags').costCenter]"
+                            },
+                            "properties": {}
+                        },
+                        {
+                            "comments": "Nested deployment for Network Watcher",
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "[variables('apiVersions').deployments]",
+                            "name": "[variables('deploymentNames').networkWatcher]",
+                            "resourceGroup": "[variables('resourceGroups').networkWatcher]",
+                            "dependsOn": [
+                                "[concat('Microsoft.Resources/resourceGroups/', variables('resourceGroups').networkWatcher)]"
+                            ],
+                            "properties": {
+                                "mode": "Incremental",
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "parameters": {},
+                                    "resources": [
+                                        {
+                                            "comments": "Deploy Resource Group Lock",
+                                            "type": "Microsoft.Authorization/locks",
+                                            "apiVersion": "[variables('apiVersions').locks]",
+                                            "name": "ResourceGroup-DontDelete",
+                                            "properties": {
+                                                "level": "CanNotDelete",
+                                                "notes": "Prevent deletion of the resourceGroup"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Deploy Network Watcher",
+                                            "condition": "[and(equals(parameters('enableSpoke'), 'Yes'), not(empty(parameters('spokeSubscriptionId'))))]",
+                                            "type": "Microsoft.Network/networkWatchers",
+                                            "apiVersion": "[variables('apiVersions').networkWatchers]",
+                                            "name": "[variables('networkWatcher')]",
+                                            "location": "[parameters('location')]",
+                                            "tags": {},
+                                            "properties": {},
+                                            "resources": []
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "comments": "Nested deployment for Azure Network Resources",
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "[variables('apiVersions').deployments]",
+                            "name": "[variables('deploymentNames').spokeNetwork]",
+                            "resourceGroup": "[variables('resourceGroups').spokeNetwork]",
+                            "dependsOn": [
+                                "[concat('Microsoft.Resources/resourceGroups/', variables('resourceGroups').spokeNetwork)]"
+                            ],
+                            "properties": {
+                                "mode": "Incremental",
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "parameters": {},
+                                    "resources": [
+                                        {
+                                            "comments": "Deploy Resource Group Lock",
+                                            "type": "Microsoft.Authorization/locks",
+                                            "apiVersion": "[variables('apiVersions').locks]",
+                                            "name": "ResourceGroup-DontDelete",
+                                            "properties": {
+                                                "level": "CanNotDelete",
+                                                "notes": "Prevent deletion of the resourceGroup"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Deploy Azure Network Resources",
+                                            "condition": "[and(equals(parameters('enableSpoke'), 'Yes'), not(empty(parameters('spokeSubscriptionId'))))]",
+                                            "type": "Microsoft.Network/virtualNetworks",
+                                            "apiVersion": "[variables('apiVersions').virtualNetworks]",
+                                            "name": "[variables('vnetName')]",
+                                            "location": "[parameters('location')]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/networkSecurityGroups/', variables('webNsg'))]",
+                                                "[concat('Microsoft.Network/networkSecurityGroups/', variables('appsNsg'))]",
+                                                "[concat('Microsoft.Network/networkSecurityGroups/', variables('dataNsg'))]",
+                                                "[concat('Microsoft.Network/routeTables/', variables('udrName'))]"
+                                            ],
+                                            "properties": {
+                                                "addressSpace": {
+                                                    "addressPrefixes": [
+                                                        "[parameters('addressPrefix')]"
+                                                    ]
+                                                }
+                                            },
+                                            "resources": [
+                                            ]
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of Route Table",
+                                            "condition": "[and(equals(parameters('enableUdr'), 'Yes'), not(empty(parameters('hubFwIp'))))]",
+                                            "type": "Microsoft.Network/routeTables",
+                                            "apiVersion": "[variables('apiVersions').routeTables]",
+                                            "name": "[variables('udrName')]",
+                                            "location": "[parameters('location')]",
+                                            "properties": {
+                                                "routes": [
+                                                    {
+                                                        "name": "[variables('udrRoute')]",
+                                                        "properties": {
+                                                            "addressPrefix": "0.0.0.0/0",
+                                                            "nextHopType": "VirtualAppliance",
+                                                            "nextHopIpAddress": "[parameters('hubFwIp')]"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of Web Subnet",
+                                            "condition": "[and(equals(parameters('enableWeb'), 'Yes'), not(empty(parameters('subnetMaskForWeb'))))]",
+                                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                                            "apiVersion": "[variables('apiVersions').subnets]",
+                                            "name": "[concat(variables('vnetName'), '/', variables('webSubnet'))]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+                                                "[concat('Microsoft.Network/routeTables/', variables('udrName'))]",
+                                                "[concat('Microsoft.Network/networkSecurityGroups/', variables('webNsg'))]"
+                                            ],
+                                            "properties": {
+                                                "addressPrefix": "[parameters('subnetMaskForWeb')]",
+                                                "routeTable": {
+                                                    "id": "[variables('udrId')]"
+                                                },
+                                                "networkSecurityGroup": {
+                                                    "id": "[variables('webNsgId')]"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of Web NSG",
+                                            "condition": "[and(equals(parameters('enableWeb'), 'Yes'), not(empty(parameters('subnetMaskForWeb'))))]",
+                                            "type": "Microsoft.Network/networkSecurityGroups",
+                                            "apiVersion": "[variables('apiVersions').networkSecurityGroups]",
+                                            "name": "[variables('webNsg')]",
+                                            "location": "[parameters('location')]",
+                                            "tags": {
+                                                "appliedSubnet": "[concat(variables('vnetName'), '/', variables('webSubnet'))]"
+                                            },
+                                            "properties": {
+                                                "securityRules": [
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of Apps Subnet",
+                                            "condition": "[and(equals(parameters('enableApp'), 'Yes'), not(empty(parameters('subnetMaskForApp'))))]",
+                                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                                            "apiVersion": "[variables('apiVersions').subnets]",
+                                            "name": "[concat(variables('vnetName'), '/', variables('appsSubnet'))]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+                                                "[concat('Microsoft.Network/routeTables/', variables('udrName'))]",
+                                                "[concat('Microsoft.Network/networkSecurityGroups/', variables('appsNsg'))]",
+                                                "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), variables('webSubnet'))]"
+                                            ],
+                                            "properties": {
+                                                "addressPrefix": "[parameters('subnetMaskForApp')]",
+                                                "routeTable": {
+                                                    "id": "[variables('udrId')]"
+                                                },
+                                                "networkSecurityGroup": {
+                                                    "id": "[variables('appsNsgId')]"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of Apps NSG",
+                                            "condition": "[and(equals(parameters('enableApp'), 'Yes'), not(empty(parameters('subnetMaskForApp'))))]",
+                                            "type": "Microsoft.Network/networkSecurityGroups",
+                                            "apiVersion": "[variables('apiVersions').networkSecurityGroups]",
+                                            "name": "[variables('appsNsg')]",
+                                            "location": "[parameters('location')]",
+                                            "tags": {
+                                                "appliedSubnet": "[concat(variables('vnetName'), '/', variables('appsSubnet'))]"
+                                            },
+                                            "properties": {
+                                                "securityRules": []
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of Data Subnet",
+                                            "condition": "[and(equals(parameters('enableData'), 'Yes'), not(empty(parameters('subnetMaskForData'))))]",
+                                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                                            "apiVersion": "[variables('apiVersions').subnets]",
+                                            "name": "[concat(variables('vnetName'), '/', variables('dataSubnet'))]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+                                                "[concat('Microsoft.Network/routeTables/', variables('udrName'))]",
+                                                "[concat('Microsoft.Network/networkSecurityGroups/', variables('dataNsg'))]",
+                                                "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), variables('webSubnet'))]",
+                                                "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), variables('appsSubnet'))]"
+                                            ],
+                                            "properties": {
+                                                "addressPrefix": "[parameters('subnetMaskForData')]",
+                                                "routeTable": {
+                                                    "id": "[variables('udrId')]"
+                                                },
+                                                "networkSecurityGroup": {
+                                                    "id": "[variables('dataNsgId')]"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of Data NSG",
+                                            "condition": "[and(equals(parameters('enableData'), 'Yes'), not(empty(parameters('subnetMaskForData'))))]",
+                                            "type": "Microsoft.Network/networkSecurityGroups",
+                                            "apiVersion": "[variables('apiVersions').networkSecurityGroups]",
+                                            "name": "[variables('dataNsg')]",
+                                            "location": "[parameters('location')]",
+                                            "tags": {
+                                                "appliedSubnet": "[concat(variables('vnetName'), '/', variables('dataSubnet'))]"
+                                            },
+                                            "properties": {
+                                                "securityRules": []
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

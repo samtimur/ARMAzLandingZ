@@ -1,0 +1,90 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "enterpriseScaleCompanyPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide a prefix (max 10 characters, unique at tenant-scope) for the Management Group hierarchy and other resources created as part of Enterprise-scale."
+            }
+        },
+        "rgName": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide the resource group name where the Log Analytics workspace is deployed."
+            }
+        },
+        "recoveryVaultName": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide resource name for the Recovery services Vault"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[deployment().location]",
+            "metadata": {
+                "description": "Select Azure region for the Recovery Services Vault. Default, we will use same region as deployment."
+            }
+        }
+    },
+    "variables": {
+        "recoveryServicesVault": {
+            "policyName": "[toLower(concat(parameters('enterpriseScaleCompanyPrefix'),'-backuppolicy'))]",
+            "vaultStorageType": "LocallyRedundant"
+        }
+    },
+    "resources": [
+        {
+            "comments": "Nested deployment for Recovery Services Vault",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "[take(concat('rsv-', guid(deployment().name)), 64)]",
+            "resourceGroup": "[parameters('rgName')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "resources": [
+                        {
+                            "comments": "Deploy Resource Group Lock",
+                            "type": "Microsoft.Authorization/locks",
+                            "apiVersion": "2016-09-01",
+                            "name": "ResourceGroup-DontDelete",
+                            "properties": {
+                                "level": "CanNotDelete",
+                                "notes": "Prevent deletion of the resourceGroup"
+                            }
+                        },
+                        {
+                            "comments": "Deploy Recovery Services Vault",
+                            "type": "Microsoft.RecoveryServices/vaults",
+                            "apiVersion": "2020-02-02",
+                            "name": "[parameters('recoveryVaultName')]",
+                            "tags": {},
+                            "location": "[parameters('location')]",
+                            "sku": {
+                                "name": "RS0",
+                                "tier": "Standard"
+                            },
+                            "properties": {}
+                        },
+                        {
+                            "type": "Microsoft.RecoveryServices/vaults/backupstorageconfig",
+                            "apiVersion": "2018-01-10",
+                            "name": "[concat(parameters('recoveryVaultName'), '/vaultstorageconfig')]",
+                            "dependsOn": [
+                                "[concat('Microsoft.RecoveryServices/vaults/', parameters('recoveryVaultName'))]"
+                            ],
+                            "properties": {
+                                "StorageModelType": "[variables('recoveryServicesVault').vaultStorageType]"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

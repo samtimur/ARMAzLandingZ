@@ -1,0 +1,401 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "rgName": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide the resource group name where the Log Analytics workspace is deployed."
+            }
+        },
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide resource name for the Log Analytics workspace."
+            }
+        },
+        "workspaceRegion": {
+            "type": "string",
+            "defaultValue": "[deployment().location]",
+            "metadata": {
+                "description": "Select Azure region for the Log Analytics workspace. Default, we will use same region as deployment."
+            }
+        },
+        "enableSecuritySolution": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes",
+            "metadata": {
+                "description": "Select whether security solutions should be enabled or not."
+            }
+        },
+        "enableAgentHealth": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes",
+            "metadata": {
+                "description": "Select whether agent health solution should be enabled or not."
+            }
+        },
+        "enableChangeTracking": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes",
+            "metadata": {
+                "description": "Select whether change tracking solution should be enabled or not."
+            }
+        },
+        "enableUpdateMgmt": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes",
+            "metadata": {
+                "description": "Select whether update mgmt solution should be enabled or not."
+            }
+        },
+        "enableActivityLog": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes",
+            "metadata": {
+                "description": "Select whether activity log solution should be enabled or not."
+            }
+        },
+        "enableVmInsights": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes",
+            "metadata": {
+                "description": "Select whether VM insights solution should be enabled or not."
+            }
+        },
+        "enableServiceMap": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes",
+            "metadata": {
+                "description": "Select whether service map solution should be enabled or not."
+            }
+        },
+        "enableSqlAssessment": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes",
+            "metadata": {
+                "description": "Select whether sql assessment solution should be enabled or not."
+            }
+        },
+        "enableKeyVaultAnalytics": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes",
+            "metadata": {
+                "description": "Select whether key Vault Analytics solution should be enabled or not."
+            }
+        },
+        "enableContainerInsights": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes",
+            "metadata": {
+                "description": "Select whether ContainerInsights solution should be enabled or not."
+            }
+        }
+    },
+    "variables": {
+        "laResourceId": "[toLower(concat(subscription().id, '/resourceGroups/', parameters('rgName'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')))]",
+        "solutions": {
+            "security": {
+                "name": "[concat('Security', '(', parameters('workspaceName'), ')')]",
+                "marketplaceName": "Security"
+            },
+            "agentHealth": {
+                "name": "[concat('AgentHealthAssessment', '(', parameters('workspaceName'), ')')]",
+                "marketplaceName": "AgentHealthAssessment"
+            },
+            "changeTracking": {
+                "name": "[concat('ChangeTracking', '(', parameters('workspaceName'), ')')]",
+                "marketplaceName": "ChangeTracking"
+            },
+            "updateMgmt": {
+                "name": "[concat('Updates', '(', parameters('workspaceName'), ')')]",
+                "marketplaceName": "Updates"
+            },
+            "azureActivity": {
+                "name": "[concat('AzureActivity', '(', parameters('workspaceName'), ')')]",
+                "marketplaceName": "AzureActivity"
+            },
+            "sqlAssessment": {
+                "name": "[concat('SQLAssessment', '(', parameters('workspaceName'), ')')]",
+                "marketplaceName": "SQLAssessment"
+            },
+            "vmInsights": {
+                "name": "[concat('VMInsights', '(', parameters('workspaceName'), ')')]",
+                "marketplaceName": "VMInsights"
+            },
+            "serviceMap": {
+                "name": "[concat('ServiceMap', '(', parameters('workspaceName'), ')')]",
+                "marketplaceName": "ServiceMap"
+            },
+            "securityInsights": {
+                "name": "[concat('SecurityInsights', '(', parameters('workspaceName'), ')')]",
+                "marketplaceName": "SecurityInsights"
+            },
+            "KeyVaultAnalytics": {
+                "name": "[concat('KeyVaultAnalytics', '(', parameters('workspaceName'), ')')]",
+                "marketplaceName": "KeyVaultAnalytics"
+            },
+            "ContainerInsights": {
+                "name": "[concat('ContainerInsights', '(', parameters('workspaceName'), ')')]",
+                "marketplaceName": "ContainerInsights"
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "[take(concat('monSolutions-', guid(deployment().name)), 64)]",
+            "resourceGroup": "[parameters('rgName')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "comments": "Deploy Resource Group Lock",
+                            "type": "Microsoft.Authorization/locks",
+                            "apiVersion": "2016-09-01",
+                            "name": "ResourceGroup-DontDelete",
+                            "properties": {
+                                "level": "CanNotDelete",
+                                "notes": "Prevent deletion of the resourceGroup"
+                            }
+                        },
+                        {
+                            "comments": "Deploy the Log Analytics Solution for Agent Health",
+                            "condition": "[equals(parameters('enableAgentHealth'), 'Yes')]",
+                            "apiVersion": "2015-11-01-preview",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "name": "[variables('solutions').agentHealth.name]",
+                            "location": "[parameters('workspaceRegion')]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('laResourceId')]"
+                            },
+                            "plan": {
+                                "name": "[variables('solutions').agentHealth.name]",
+                                "product": "[concat('OMSGallery/', variables('solutions').agentHealth.marketplaceName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        },
+                        {
+                            "comments": "Deploy the Log Analytics Solution for Azure Activity Logs",
+                            "condition": "[equals(parameters('enableActivityLog'), 'Yes')]",
+                            "apiVersion": "2015-11-01-preview",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "name": "[variables('solutions').azureActivity.name]",
+                            "location": "[parameters('workspaceRegion')]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('laResourceId')]"
+                            },
+                            "plan": {
+                                "name": "[variables('solutions').azureActivity.name]",
+                                "product": "[concat('OMSGallery/', variables('solutions').azureActivity.marketplaceName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        },
+                        {
+                            "comments": "Deploy the Log Analytics Solution for Change Tracking",
+                            "condition": "[equals(parameters('enableChangeTracking'), 'Yes')]",
+                            "apiVersion": "2015-11-01-preview",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "name": "[variables('solutions').changeTracking.name]",
+                            "location": "[parameters('workspaceRegion')]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('laResourceId')]"
+                            },
+                            "plan": {
+                                "name": "[variables('solutions').changeTracking.name]",
+                                "product": "[concat('OMSGallery/', variables('solutions').changeTracking.marketplaceName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        },
+                        {
+                            "comments": "Deploy the Log Analytics Solution for VM Insights",
+                            "condition": "[equals(parameters('enableVmInsights'), 'Yes')]",
+                            "apiVersion": "2015-11-01-preview",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "name": "[variables('solutions').vmInsights.name]",
+                            "location": "[parameters('workspaceRegion')]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('laResourceId')]"
+                            },
+                            "plan": {
+                                "name": "[variables('solutions').vmInsights.name]",
+                                "product": "[concat('OMSGallery/', variables('solutions').vmInsights.marketplaceName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        },
+                        {
+                            "comments": "Deploy the Log Analytics Solution for Security",
+                            "condition": "[equals(parameters('enableSecuritySolution'), 'Yes')]",
+                            "apiVersion": "2015-11-01-preview",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "name": "[variables('solutions').security.name]",
+                            "location": "[parameters('workspaceRegion')]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('laResourceId')]"
+                            },
+                            "plan": {
+                                "name": "[variables('solutions').security.name]",
+                                "product": "[concat('OMSGallery/', variables('solutions').security.marketplaceName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        },
+                        {
+                            "comments": "Deploy the Log Analytics Solution for Azure Sentinel",
+                            "condition": "[equals(parameters('enableSecuritySolution'), 'Yes')]",
+                            "apiVersion": "2015-11-01-preview",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "name": "[variables('solutions').securityInsights.name]",
+                            "location": "[parameters('workspaceRegion')]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('laResourceId')]"
+                            },
+                            "plan": {
+                                "name": "[variables('solutions').securityInsights.name]",
+                                "product": "[concat('OMSGallery/', variables('solutions').securityInsights.marketplaceName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        },
+                        {
+                            "comments": "Deploy the Log Analytics Solution for Service Map",
+                            "condition": "[equals(parameters('enableServiceMap'), 'Yes')]",
+                            "apiVersion": "2015-11-01-preview",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "name": "[variables('solutions').serviceMap.name]",
+                            "location": "[parameters('workspaceRegion')]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('laResourceId')]"
+                            },
+                            "plan": {
+                                "name": "[variables('solutions').serviceMap.name]",
+                                "product": "[concat('OMSGallery/', variables('solutions').serviceMap.marketplaceName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        },
+                        {
+                            "comments": "Deploy the Log Analytics Solution for SQL Assessment",
+                            "condition": "[equals(parameters('enableSqlAssessment'), 'Yes')]",
+                            "apiVersion": "2015-11-01-preview",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "name": "[variables('solutions').sqlAssessment.name]",
+                            "location": "[parameters('workspaceRegion')]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('laResourceId')]"
+                            },
+                            "plan": {
+                                "name": "[variables('solutions').sqlAssessment.name]",
+                                "product": "[concat('OMSGallery/', variables('solutions').sqlAssessment.marketplaceName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        },
+                        {
+                            "comments": "Deploy the Log Analytics Solution for Update Management",
+                            "condition": "[equals(parameters('enableUpdateMgmt'), 'Yes')]",
+                            "apiVersion": "2015-11-01-preview",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "name": "[variables('solutions').updateMgmt.name]",
+                            "location": "[parameters('workspaceRegion')]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('laResourceId')]"
+                            },
+                            "plan": {
+                                "name": "[variables('solutions').updateMgmt.name]",
+                                "product": "[concat('OMSGallery/', variables('solutions').updateMgmt.marketplaceName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        },
+                        {
+                            "comments": "Deploy the Log Analytics Solution for Key Vault Analytics",
+                            "condition": "[equals(parameters('enableKeyVaultAnalytics'), 'Yes')]",
+                            "apiVersion": "2015-11-01-preview",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "name": "[variables('solutions').KeyVaultAnalytics.name]",
+                            "location": "[deployment().location]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('laResourceId')]"
+                            },
+                            "plan": {
+                                "name": "[variables('solutions').KeyVaultAnalytics.name]",
+                                "product": "[concat('OMSGallery/', variables('solutions').KeyVaultAnalytics.marketplaceName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        },
+                        {
+                            "comments": "Deploy the Log Analytics Solution for Conatiner Insights",
+                            "condition": "[equals(parameters('enableContainerInsights'), 'Yes')]",
+                            "apiVersion": "2015-11-01-preview",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "name": "[variables('solutions').ContainerInsights.name]",
+                            "location": "[deployment().location]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('laResourceId')]"
+                            },
+                            "plan": {
+                                "name": "[variables('solutions').ContainerInsights.name]",
+                                "product": "[concat('OMSGallery/', variables('solutions').ContainerInsights.marketplaceName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

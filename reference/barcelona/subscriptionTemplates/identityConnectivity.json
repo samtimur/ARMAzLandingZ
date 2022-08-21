@@ -1,0 +1,225 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "enableSpoke": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableDdoS": {
+            "type": "string",
+            "defaultValue": "No",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "metadata": {
+                "description": "Select whether the DDoS Standard protection plan should be enabled or not."
+            }
+        },
+        "addressPrefix": {
+            "type": "string",
+            "metadata": {
+                "displayName": "addressPrefix",
+                "description": "Address prefix of the HUB"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "displayName": "location",
+                "description": "Location of the HUB"
+            },
+            "defaultValue": "[deployment().location]"
+        },
+        "subscriptionId": {
+            "type": "string",
+            "maxLength": 36,
+            "defaultValue": ""
+        },
+        "networkRg": {
+            "type": "string"
+        },
+        "spokeVnet": {
+            "type": "string"
+        },
+        "networkSecurityGroup": {
+            "type": "string"
+        },
+        "routeTable": {
+            "type": "string"
+        },
+        "networkWatcherRg": {
+            "type": "string"
+        },
+        "networkWatcher": {
+            "type": "string"
+        },
+        "ddosPlanResourceId": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "addsSubnet": [
+            {
+                "name": "adds",
+                "properties": {
+                    "addressPrefix": "[parameters('addressPrefix')]",
+                    "networkSecurityGroup": {
+                        "id": "[variables('nsgId')]"
+                    },
+                    "routeTable": {
+                        "id": "[variables('udrId')]"
+                    }
+                }
+            }
+        ],
+        "ddosProtectionPlanId": {
+            "id": "[parameters('ddosPlanResourceId')]"
+        },
+        "nsgId": "[concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('networkRg'), '/providers/Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroup'))]",
+        "udrId": "[concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('networkRg'),'/providers/Microsoft.Network/routeTables/', parameters('routeTable'))]"
+    },
+    "resources": [
+        {
+            "comments": "Conditional deployment for Virtual Network in the Platform Identity Subscription",
+
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "location": "[parameters('location')]",
+            "name": "[take(concat('IdentityConnectivity-', guid(deployment().name)), 64)]",
+            "subscriptionId": "[parameters('subscriptionId')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "resources": [
+                        {
+                            "comments": "Nested deployment for Network Watcher",
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "2019-10-01",
+                            "name": "[take(concat('networkWatcher-', guid(deployment().name)), 64)]",
+                            "resourceGroup": "[parameters('networkWatcherRg')]",
+                            "dependsOn": [
+                            ],
+                            "properties": {
+                                "mode": "Incremental",
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "parameters": {},
+                                    "resources": [
+                                        {
+                                            "comments": "Deploy Resource Group Lock",
+                                            "type": "Microsoft.Authorization/locks",
+                                            "apiVersion": "2016-09-01",
+                                            "name": "ResourceGroup-DontDelete",
+                                            "properties": {
+                                                "level": "CanNotDelete",
+                                                "notes": "Prevent deletion of the resourceGroup"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Deploy Network Watcher",
+                                            "condition": "[and(equals(parameters('enableSpoke'), 'Yes'), not(empty(parameters('subscriptionId'))))]",
+                                            "type": "Microsoft.Network/networkWatchers",
+                                            "apiVersion": "2020-05-01",
+                                            "name": "[parameters('networkWatcher')]",
+                                            "location": "[parameters('location')]",
+                                            "tags": {},
+                                            "properties": {},
+                                            "resources": []
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "comments": "Nested deployment for Azure Network Resources",
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "2019-10-01",
+                            "name": "[take(concat('IdentityConnectivity-', guid(deployment().name)), 64)]",
+                            "resourceGroup": "[parameters('networkRg')]",
+                            "dependsOn": [
+                            ],
+                            "properties": {
+                                "mode": "Incremental",
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "parameters": {},
+                                    "resources": [
+                                        {
+                                            "comments": "Deploy Resource Group Lock",
+                                            "type": "Microsoft.Authorization/locks",
+                                            "apiVersion": "2016-09-01",
+                                            "name": "ResourceGroup-DontDelete",
+                                            "properties": {
+                                                "level": "CanNotDelete",
+                                                "notes": "Prevent deletion of the resourceGroup"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Deploy Azure Virtual Network Resources",
+                                            "condition": "[and(equals(parameters('enableSpoke'), 'Yes'), not(empty(parameters('subscriptionId'))))]",
+                                            "type": "Microsoft.Network/virtualNetworks",
+                                            "apiVersion": "2020-04-01",
+                                            "name": "[parameters('spokeVnet')]",
+                                            "location": "[parameters('location')]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroup'))]",
+                                                "[concat('Microsoft.Network/routeTables/', parameters('routeTable'))]"
+                                            ],
+                                            "properties": {
+                                                "addressSpace": {
+                                                    "addressPrefixes": [
+                                                        "[parameters('addressPrefix')]"
+                                                    ]
+                                                },
+                                                "enableDdosProtection": "[if(equals(parameters('enableDdoS'), 'Yes'), 'true', 'false')]",
+                                                "ddosProtectionPlan": "[if(equals(parameters('enableDdoS'), 'Yes'), variables('ddosProtectionPlanId'), json('null'))]",
+                                                "subnets": "[if(not(empty(parameters('addressPrefix'))), variables('addsSubnet'), json('[]'))]"
+                                            },
+                                            "resources": []
+                                        },
+                                        {
+                                            "comments": "Deployment of ADDS NSG",
+                                            "type": "Microsoft.Network/networkSecurityGroups",
+                                            "apiVersion": "2020-04-01",
+                                            "name": "[parameters('networkSecurityGroup')]",
+                                            "location": "[parameters('location')]",
+                                            "tags": {
+                                                "appliedSubnet": "[concat(parameters('spokeVnet'), '/', parameters('networkSecurityGroup'))]"
+                                            },
+                                            "properties": {
+                                                "securityRules": [
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "comments": "Route Table",
+                                            "type": "Microsoft.Network/routeTables",
+                                            "apiVersion": "2020-04-01",
+                                            "name": "[parameters('routeTable')]",
+                                            "location": "[parameters('location')]",
+                                            "properties": {
+                                                "routes": [
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

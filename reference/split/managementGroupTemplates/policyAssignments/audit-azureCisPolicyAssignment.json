@@ -1,0 +1,45 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "enforcementMode": {
+            "type": "string",
+            "allowedValues": [
+                "Default",
+                "DoNotEnforce"
+            ],
+            "defaultValue": "Default"
+        }
+    },
+    "variables": {
+        "policyDefinitions": {
+            "auditAzureCis": "/providers/Microsoft.Authorization/policySetDefinitions/612b5213-9160-4969-8578-1518bd2a000c"
+        },
+        "policyAssignmentNames": {
+            "auditAzureCis": "Azure-CIS-1.3",
+            "description": "This initiative includes policies that address a subset of CIS Microsoft Azure Foundations Benchmark recommendations. Additional policies will be added in upcoming releases. For more information, visit https://aka.ms/cisazure130-initiative.",
+            "displayName": "Audit Azure Foundations CIS Benchmark v1.3.0"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('policyAssignmentNames').auditAzureCis]",
+            "location": "[deployment().location]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "description": "[variables('policyAssignmentNames').description]",
+                "displayName": "[variables('policyAssignmentNames').displayName]",
+                "policyDefinitionId": "[variables('policyDefinitions').auditAzureCis]",
+                "enforcementMode": "[parameters('enforcementMode')]",
+                "parameters": {
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}

@@ -1,0 +1,493 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "The region that log analytics is deployed to."
+            },
+            "allowedValues": [
+                "australiaeast",
+                "australiasoutheast"
+            ]
+        },
+        "workspaceResourceId": {
+            "type": "string",
+            "metadata": {
+                "description": "The Log Analytics Workspace where any data sources will be directed."
+            }
+        }
+    },
+    "variables": {
+        "workspaceName": "[split(parameters('workspaceResourceId'),'/')[8]]",
+        "changeTrackingResourceName": "[concat('ChangeTracking(', variables('workspaceName'), ')')]",
+        "securityResourceName": "[concat('Security(', variables('workspaceName'), ')')]",
+        "securityCenterFreeResourceName": "[concat('SecurityCenterFree(', variables('workspaceName'), ')')]",
+        "updatesResourceName": "[concat('Updates(', variables('workspaceName'), ')')]"
+    },
+    "resources": [      
+        {
+            "apiVersion": "2015-11-01-preview",
+            "type": "Microsoft.OperationsManagement/solutions",
+            "name": "[variables('changeTrackingResourceName')]",
+            "location": "[parameters('workspaceRegion')]",
+            "properties": {
+                "workspaceResourceId": "[parameters('workspaceResourceId')]"
+            },
+            "plan": {
+                "name": "[concat('ChangeTracking(', variables('workspaceName'), ')')]",
+                "product": "OMSGallery/ChangeTracking",
+                "promotionCode": "",
+                "publisher": "Microsoft"
+            }
+        },
+        {
+            //Enable Azure Defender for Servers on Log Analytics workspace
+            "type": "Microsoft.OperationsManagement/solutions",
+            "apiVersion": "2015-11-01-preview",
+            "name": "[variables('securityResourceName')]",
+            "location": "[parameters('workspaceRegion')]",
+            "plan": {
+                "name": "[variables('securityResourceName')]",
+                "promotionCode": "",
+                "product": "OMSGallery/Security",
+                "publisher": "Microsoft"
+            },
+            "properties": {
+                "workspaceResourceId": "[parameters('workspaceResourceId')]"
+            }
+        },
+        {
+            "type": "Microsoft.OperationsManagement/solutions",
+            "apiVersion": "2015-11-01-preview",
+            "name": "[variables('securityCenterFreeResourceName')]",
+            "location": "[parameters('workspaceRegion')]",
+            "plan": {
+                "name": "[variables('securityCenterFreeResourceName')]",
+                "promotionCode": "",
+                "product": "OMSGallery/SecurityCenterFree",
+                "publisher": "Microsoft"
+            },
+            "properties": {
+                "workspaceResourceId": "[parameters('workspaceResourceId')]"
+            }
+        },
+        {
+            "apiVersion": "2015-11-01-preview",
+            "type": "Microsoft.OperationsManagement/solutions",
+            "name": "[variables('updatesResourceName')]",
+            "location": "[parameters('workspaceRegion')]",
+            "plan": {
+                "name": "[variables('updatesResourceName')]",
+                "promotionCode": "",
+                "product": "OMSGallery/Updates",
+                "publisher": "Microsoft"
+            },
+            "properties": {
+                "workspaceResourceId": "[parameters('workspaceResourceId')]"
+            }
+        },
+        {
+            "apiVersion": "2020-08-01",
+            "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+            "name": "[concat(variables('workspaceName'),'/','ChangeTrackingDefaultRegistry_IPv6 Setting')]",
+            "dependsOn":[
+                "[resourceId('Microsoft.OperationsManagement/solutions', variables('changeTrackingResourceName'))]"
+            ],
+            "properties": {
+                "enabled": "True",
+                "keyName": "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters",
+                "valueName": "",
+                "recurse": "False",
+                "groupTag": "Custom"
+            },
+            "kind": "ChangeTrackingDefaultRegistry"
+        },
+        {
+            "apiVersion": "2020-08-01",
+            "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+            "name": "[concat(variables('workspaceName'),'/','ChangeTrackingDefaultRegistry_LSA Setting')]",
+            "dependsOn":[
+                "[resourceId('Microsoft.OperationsManagement/solutions', variables('changeTrackingResourceName'))]"
+            ],
+            "properties": {
+                "enabled": "True",
+                "keyName": "HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Lsa",
+                "valueName": "",
+                "recurse": "False",
+                "groupTag": "Custom"
+            },
+            "kind": "ChangeTrackingDefaultRegistry"
+        },
+        {
+            "apiVersion": "2020-08-01",
+            "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+            "name": "[concat(variables('workspaceName'),'/','ChangeTrackingDefaultRegistry_WindowsNtCurrentVersion')]",
+            "dependsOn":[
+                "[resourceId('Microsoft.OperationsManagement/solutions', variables('changeTrackingResourceName'))]"
+            ],
+            "properties": {
+                "enabled": "True",
+                "keyName": "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+                "valueName": "",
+                "recurse": "False",
+                "groupTag": "Custom"
+            },
+            "kind": "ChangeTrackingDefaultRegistry"
+        },
+        {
+            //Set Log Analytics workspace to collect all security events
+            "apiVersion": "2020-08-01",
+            "type": "Microsoft.OperationalInsights/workspaces/dataSources",
+            "name": "[concat(variables('workspaceName'),'/SecurityEventCollectionConfig')]",
+            "kind": "SecurityEventCollectionConfiguration",
+            "properties": {
+                "tier": "Recommended",
+                "tierSetMethod": "Custom"
+            }
+        },
+        {
+            "apiVersion": "2021-04-01",
+            "type": "Microsoft.Insights/dataCollectionRules",
+            "name": "AccountLockoutEvents",
+            "kind": "Windows",
+            "location": "[parameters('workspaceRegion')]",
+            "properties": {
+                "dataSources": {
+                    "windowsEventLogs": [
+                        {
+                            "streams": [
+                                "Microsoft-Event"
+                            ],
+                            "xPathQueries": [
+                                "Security!*[System[((EventID=4625))]]", //Failed logins
+                                "Security!*[System[((EventID=4740))]]"  //Lockout
+                            ],
+                            "name": "AccountLockoutEvents"
+                        }
+                    ]
+                },
+                "destinations": {
+                    "logAnalytics": [
+                        {
+                            "workspaceResourceId": "[parameters('workspaceResourceId')]",
+                            "name": "[variables('workspaceName')]"
+                        }
+                    ]
+                },
+                "dataFlows": [
+                    {
+                        "streams": [
+                            "Microsoft-Event"
+                        ],
+                        "destinations": [
+                            "[variables('workspaceName')]"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2021-04-01",
+            "type": "Microsoft.Insights/dataCollectionRules",
+            "name": "ASREvents",
+            "kind": "Windows",
+            "location": "[parameters('workspaceRegion')]",
+            "properties": {
+                "dataSources": {
+                    "windowsEventLogs": [
+                        {
+                            "streams": [
+                                "Microsoft-Event"
+                            ],
+                            "xPathQueries": [
+                                "Microsoft-Windows-Windows Defender/Operational!*[System[((EventID &gt;= 1121 and EventID &lt;= 1122))]]",
+                                "Microsoft-Windows-Windows Defender/WHC!*[System[((EventID &gt;= 1121 and EventID &lt;= 1122))]]"
+                            ],
+                            "name": "ASREvents"
+                        }
+                    ]
+                },
+                "destinations": {
+                    "logAnalytics": [
+                        {
+                            "workspaceResourceId": "[parameters('workspaceResourceId')]",
+                            "name": "[variables('workspaceName')]"
+                        }
+                    ]
+                },
+                "dataFlows": [
+                    {
+                        "streams": [
+                            "Microsoft-Event"
+                        ],
+                        "destinations": [
+                            "[variables('workspaceName')]"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2021-04-01",
+            "type": "Microsoft.Insights/dataCollectionRules",
+            "name": "NTLMEvents",
+            "kind": "Windows",
+            "location": "[parameters('workspaceRegion')]",
+            "properties": {
+                "dataSources": {
+                    "windowsEventLogs": [
+                        {
+                            "streams": [
+                                "Microsoft-Event"
+                            ],
+                            "xPathQueries": [
+                                "Microsoft-Windows-NTLM/Operational!*[System[((EventID &gt;= 8001 and EventID &lt;= 8004))]]"
+                            ],
+                            "name": "NTLMEvents"
+                        }
+                    ]
+                },
+                "destinations": {
+                    "logAnalytics": [
+                        {
+                            "workspaceResourceId": "[parameters('workspaceResourceId')]",
+                            "name": "[variables('workspaceName')]"
+                        }
+                    ]
+                },
+                "dataFlows": [
+                    {
+                        "streams": [
+                            "Microsoft-Event"
+                        ],
+                        "destinations": [
+                            "[variables('workspaceName')]"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2021-04-01",
+            "type": "Microsoft.Insights/dataCollectionRules",
+            "name": "ExploitProtectionEvents",
+            "kind": "Windows",
+            "location": "[parameters('workspaceRegion')]",
+            "properties": {
+                "dataSources": {
+                    "windowsEventLogs": [
+                        {
+                            "streams": [
+                                "Microsoft-Event"
+                            ],
+                            "xPathQueries": [
+                                "Microsoft-Windows-Security-Mitigations/KernelMode!*[System[((EventID &gt;= 1 and EventID &lt;= 24))]]",
+                                "Microsoft-Windows-Security-Mitigations/UserMode!*[System[((EventID &gt;= 1 and EventID &lt;= 24))]]",
+                                "Microsoft-Windows-Win32k/Operational!*[System[((EventID=260))]]",
+                                "System!*[System[Provider[@Name='Microsoft-Windows-WER-Diag'] and (EventID=5)]]"    
+                            ],
+                            "name": "ExploitProtectionEvents"
+                        }
+                    ]
+                },
+                "destinations": {
+                    "logAnalytics": [
+                        {
+                            "workspaceResourceId": "[parameters('workspaceResourceId')]",
+                            "name": "[variables('workspaceName')]"
+                        }
+                    ]
+                },
+                "dataFlows": [
+                    {
+                        "streams": [
+                            "Microsoft-Event"
+                        ],
+                        "destinations": [
+                            "[variables('workspaceName')]"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2021-04-01",
+            "type": "Microsoft.Insights/dataCollectionRules",
+            "name": "IPsecEvents",
+            "kind": "Windows",
+            "location": "[parameters('workspaceRegion')]",
+            "properties": {
+                "dataSources": {
+                    "windowsEventLogs": [
+                        {
+                            "streams": [
+                                "Microsoft-Event"
+                            ],
+                            "xPathQueries": [
+                                "Security!*[System[((EventID &gt;= 4650 and EventID &lt;= 4651))]]", //Main mode security associations
+                                "Security!*[System[((EventID=5451))]]"                               //Quick mode security associations
+                            ],
+                            "name": "IPsecEvents"
+                        }
+                    ]
+                },
+                "destinations": {
+                    "logAnalytics": [
+                        {
+                            "workspaceResourceId": "[parameters('workspaceResourceId')]",
+                            "name": "[variables('workspaceName')]"
+                        }
+                    ]
+                },
+                "dataFlows": [
+                    {
+                        "streams": [
+                            "Microsoft-Event"
+                        ],
+                        "destinations": [
+                            "[variables('workspaceName')]"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2021-04-01",
+            "type": "Microsoft.Insights/dataCollectionRules",
+            "name": "NetworkProtectionEvents",
+            "kind": "Windows",
+            "location": "[parameters('workspaceRegion')]",
+            "properties": {
+                "dataSources": {
+                    "windowsEventLogs": [
+                        {
+                            "streams": [
+                                "Microsoft-Event"
+                            ],
+                            "xPathQueries": [
+                                "Microsoft-Windows-Windows Defender/Operational!*[System[((EventID &gt;= 1125 and EventID &lt;= 1126))]]",
+                                "Microsoft-Windows-Windows Defender/WHC!*[System[((EventID &gt;= 1125 and EventID &lt;= 1126))]]"  
+                            ],
+                            "name": "NetworkProtectionEvents"
+                        }
+                    ]
+                },
+                "destinations": {
+                    "logAnalytics": [
+                        {
+                            "workspaceResourceId": "[parameters('workspaceResourceId')]",
+                            "name": "[variables('workspaceName')]"
+                        }
+                    ]
+                },
+                "dataFlows": [
+                    {
+                        "streams": [
+                            "Microsoft-Event"
+                        ],
+                        "destinations": [
+                            "[variables('workspaceName')]"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2021-04-01",
+            "type": "Microsoft.Insights/dataCollectionRules",
+            "name": "SChannelEvents",
+            "kind": "Windows",
+            "location": "[parameters('workspaceRegion')]",
+            "properties": {
+                "dataSources": {
+                    "windowsEventLogs": [
+                        {
+                            "streams": [
+                                "Microsoft-Event"
+                            ],
+                            "xPathQueries": [
+                                "System!*[System[((EventID=36880))]]"
+                            ],
+                            "name": "SChannelEvents"
+                        }
+                    ]
+                },
+                "destinations": {
+                    "logAnalytics": [
+                        {
+                            "workspaceResourceId": "[parameters('workspaceResourceId')]",
+                            "name": "[variables('workspaceName')]"
+                        }
+                    ]
+                },
+                "dataFlows": [
+                    {
+                        "streams": [
+                            "Microsoft-Event"
+                        ],
+                        "destinations": [
+                            "[variables('workspaceName')]"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2021-04-01",
+            "type": "Microsoft.Insights/dataCollectionRules",
+            "name": "WDACEvents",
+            "kind": "Windows",
+            "location": "[parameters('workspaceRegion')]",
+            "properties": {
+                "dataSources": {
+                    "windowsEventLogs": [
+                        {
+                            "streams": [
+                                "Microsoft-Event"
+                            ],
+                            "xPathQueries": [
+                                "Microsoft-Windows-CodeIntegrity/Operational!*[System[((EventID=3077 or EventID=3092 or EventID=3099))]]"
+                            ],
+                            "name": "WDACEvents"
+                        }
+                    ]
+                },
+                "destinations": {
+                    "logAnalytics": [
+                        {
+                            "workspaceResourceId": "[parameters('workspaceResourceId')]",
+                            "name": "[variables('workspaceName')]"
+                        }
+                    ]
+                },
+                "dataFlows": [
+                    {
+                        "streams": [
+                            "Microsoft-Event"
+                        ],
+                        "destinations": [
+                            "[variables('workspaceName')]"
+                        ]
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "dataCollectionRuleResourceIds":{
+            "type": "object",
+            "value": {
+                "AccountLockoutEvents": "[resourceId('Microsoft.Insights/dataCollectionRules','AccountLockoutEvents')]",
+                "ASREvents": "[resourceId('Microsoft.Insights/dataCollectionRules','ASREvents')]",
+                "NTLMEvents": "[resourceId('Microsoft.Insights/dataCollectionRules','NTLMEvents')]",
+                "ExploitProtectionEvents": "[resourceId('Microsoft.Insights/dataCollectionRules','ExploitProtectionEvents')]",
+                "IPsecEvents": "[resourceId('Microsoft.Insights/dataCollectionRules','IPsecEvents')]",
+                "NetworkProtectionEvents": "[resourceId('Microsoft.Insights/dataCollectionRules','NetworkProtectionEvents')]",
+                "SChannelEvents": "[resourceId('Microsoft.Insights/dataCollectionRules','SChannelEvents')]",
+                "WDACEvents": "[resourceId('Microsoft.Insights/dataCollectionRules','WDACEvents')]"
+            }
+        }
+    }
+}

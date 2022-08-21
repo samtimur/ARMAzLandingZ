@@ -1,0 +1,190 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "companyPrefix": {
+            "type": "string",
+            "maxLength": 5
+        },
+        "locationPrefix": {
+            "type": "string"
+        },
+        "platformConnPrefix": {
+            "type": "string"
+        },
+        "argPrefix": {
+            "type": "string"
+        },
+        "enablePrivateDnsZones": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enablePrivateDnsZonesTable": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enablePrivateDnsZonesQueue": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enablePrivateDnsZonesFiles": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enablePrivateDnsZonesBlob": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enablePrivateDnsZonesAkv": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "connectivitySubscriptionId": {
+            "type": "string",
+            "defaultValue": "",
+            "maxLength": 36
+        },
+        "subscriptionTag": {
+            "type": "string"
+        },
+        "ownerTag": {
+            "type": "string"
+        },
+        "costCenterTag": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "deploymentName": "[take(concat(deployment().name, '-privateDns'), 64)]",
+        "namingPrefix": "[concat(parameters('companyPrefix'), '-', parameters('locationPrefix'), '-', parameters('platformConnPrefix'))]",
+        "resourceGroupName": "[toLower(concat(variables('namingPrefix'), '-', parameters('argPrefix'), '-privatedns'))]",
+        "privateLinkDns": {
+            "blob": "privatelink.blob.core.windows.net",
+            "files": "privatelink.file.core.windows.net",
+            "queue": "privatelink.queue.core.windows.net",
+            "tables": "privatelink.table.core.windows.net",
+            "keyVault": "privatelink.vaultcore.azure.net"
+        },
+        "apiVersions": {
+            "deployments": "2020-06-01",
+            "resourceGroups": "2020-06-01",
+            "locks": "2016-09-01",
+            "privateDnsZones": "2020-01-01"
+        },
+        "tags": {
+            "environment": "[parameters('subscriptionTag')]",
+            "owner": "[parameters('ownerTag')]",
+            "costCenter": "[parameters('costCenterTag')]"
+        }
+    },
+    "resources": [
+        {
+            "comments": "Create Resource Group",
+            "condition": "[and(not(empty(parameters('connectivitySubscriptionId'))),equals(parameters('enablePrivateDnsZones'), 'Yes'))]",
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "[variables('apiVersions').resourceGroups]",
+            "location": "[deployment().location]",
+            "name": "[variables('resourceGroupName')]",
+            "tags": {
+                "environment": "[variables('tags').environment]",
+                "owner": "[variables('tags').owner]",
+                "costCenter": "[variables('tags').costCenter]"
+            },
+            "properties": {}
+        },
+        {
+            "comments": "Nested deployment for Private DNS",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "name": "[variables('deploymentName')]",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "dependsOn": [
+                "[concat('Microsoft.Resources/resourceGroups/', variables('resourceGroupName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "resources": [
+                        {
+                            "comments": "Deploy Resource Group Lock",
+                            "type": "Microsoft.Authorization/locks",
+                            "apiVersion": "[variables('apiVersions').locks]",
+                            "name": "ResourceGroup-DontDelete",
+                            "properties": {
+                                "level": "CanNotDelete",
+                                "notes": "Prevent deletion of the resourceGroup"
+                            }
+                        },
+                        {
+                            "comments": "Deploy Private DNS - Blob Storage",
+                            "condition": "[equals(parameters('enablePrivateDnsZonesBlob'), 'Yes')]",
+                            "type": "Microsoft.Network/privateDnsZones",
+                            "apiVersion": "[variables('apiVersions').privateDnsZones]",
+                            "name": "[variables('privateLinkDns').blob]",
+                            "location": "global"
+                        },
+                        {
+                            "comments": "Deploy Private DNS - File Storage",
+                            "condition": "[equals(parameters('enablePrivateDnsZonesFiles'), 'Yes')]",
+                            "type": "Microsoft.Network/privateDnsZones",
+                            "apiVersion": "[variables('apiVersions').privateDnsZones]",
+                            "name": "[variables('privateLinkDns').files]",
+                            "location": "global"
+                        },
+                        {
+                            "comments": "Deploy Private DNS - Queue Storage",
+                            "condition": "[equals(parameters('enablePrivateDnsZonesQueue'), 'Yes')]",
+                            "type": "Microsoft.Network/privateDnsZones",
+                            "apiVersion": "[variables('apiVersions').privateDnsZones]",
+                            "name": "[variables('privateLinkDns').queue]",
+                            "location": "global"
+                        },
+                        {
+                            "comments": "Deploy Private DNS - Table Storage",
+                            "condition": "[equals(parameters('enablePrivateDnsZonesTable'), 'Yes')]",
+                            "type": "Microsoft.Network/privateDnsZones",
+                            "apiVersion": "[variables('apiVersions').privateDnsZones]",
+                            "name": "[variables('privateLinkDns').tables]",
+                            "location": "global"
+                        },
+                        {
+                            "comments": "Private DNS - Key Vault",
+                            "condition": "[equals(parameters('enablePrivateDnsZonesAkv'), 'Yes')]",
+                            "type": "Microsoft.Network/privateDnsZones",
+                            "apiVersion": "[variables('apiVersions').privateDnsZones]",
+                            "name": "[variables('privateLinkDns').keyVault]",
+                            "location": "global"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

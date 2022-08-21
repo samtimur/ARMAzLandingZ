@@ -1,0 +1,122 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "topLevelManagementGroupPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide the company prefix to the root management group containing the policy definitions."
+            }
+        },
+        "listOfResourceTypesWithDiagnosticLogsEnabled": {
+            "type": "array",
+            "defaultvalue": [
+                "Microsoft.ApiManagement/service",
+                "Microsoft.AnalysisServices/servers",
+                "Microsoft.Network/applicationGateways",
+                "Microsoft.Automation/automationAccounts",
+                "Microsoft.ContainerInstance/containerGroups",
+                "Microsoft.ContainerRegistry/registries",
+                "Microsoft.ContainerService/managedClusters",
+                "Microsoft.Batch/batchAccounts",
+                "Microsoft.Cdn/profiles/endpoints",
+                "Microsoft.CognitiveServices/accounts",
+                "Microsoft.DocumentDB/databaseAccounts",
+                "Microsoft.DataFactory/factories",
+                "Microsoft.DataLakeAnalytics/accounts",
+                "Microsoft.DataLakeStore/accounts",
+                "Microsoft.EventGrid/eventSubscriptions",
+                "Microsoft.EventGrid/topics",
+                "Microsoft.EventHub/namespaces",
+                "Microsoft.Network/expressRouteCircuits",
+                "Microsoft.Network/azureFirewalls",
+                "Microsoft.HDInsight/clusters",
+                "Microsoft.Devices/IotHubs",
+                "Microsoft.KeyVault/vaults",
+                "Microsoft.Network/loadBalancers",
+                "Microsoft.Logic/integrationAccounts",
+                "Microsoft.Logic/workflows",
+                "Microsoft.DBforMySQL/servers",
+                "Microsoft.Network/networkInterfaces",
+                "Microsoft.Network/networkSecurityGroups",
+                "Microsoft.DBforPostgreSQL/servers",
+                "Microsoft.PowerBIDedicated/capacities",
+                "Microsoft.Network/publicIPAddresses",
+                "Microsoft.RecoveryServices/vaults",
+                "Microsoft.Cache/redis",
+                "Microsoft.Relay/namespaces",
+                "Microsoft.Search/searchServices",
+                "Microsoft.ServiceBus/namespaces",
+                "Microsoft.SignalRService/SignalR",
+                "Microsoft.Sql/servers/databases",
+                "Microsoft.Sql/servers/elasticPools",
+                "Microsoft.StreamAnalytics/streamingjobs",
+                "Microsoft.TimeSeriesInsights/environments",
+                "Microsoft.Network/trafficManagerProfiles",
+                "Microsoft.Compute/virtualMachines",
+                "Microsoft.Compute/virtualMachineScaleSets",
+                "Microsoft.Network/virtualNetworks",
+                "Microsoft.Network/virtualNetworkGateways"
+            ]
+        },
+        "enforcementMode": {
+            "type": "string",
+            "allowedValues": [
+                "Default",
+                "DoNotEnforce"
+            ],
+            "defaultValue": "Default"
+        }
+    },
+    "variables": {
+        "policyDefinitions": {
+            "auditIso27001": "/providers/Microsoft.Authorization/policySetDefinitions/89c6cddc-1c73-4ac1-b19c-54d1a15a42f2"
+        },
+        "policyAssignmentNames": {
+            "auditIso27001": "ISO-27001-2013",
+            "description": "This initiative includes audit and virtual machine extension deployment policies that address a subset of ISO 27001:2013 controls. Additional policies will be added in upcoming releases. For more information, visit https://aka.ms/iso27001-init.",
+            "displayName": "Audit ISO 27001-2013 Compliance"
+        },
+        "rbac": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+        "roleAssignmentNames": {
+            "auditIso27001": "[guid(concat(parameters('topLevelManagementGroupPrefix'),variables('policyAssignmentNames').auditIso27001))]"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('policyAssignmentNames').auditIso27001]",
+            "location": "[deployment().location]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "description": "[variables('policyAssignmentNames').description]",
+                "displayName": "[variables('policyAssignmentNames').displayName]",
+                "policyDefinitionId": "[variables('policyDefinitions').auditIso27001]",
+                "enforcementMode": "[parameters('enforcementMode')]",
+                "parameters": {
+                    "listOfResourceTypesWithDiagnosticLogsEnabled": {
+                        "value": "[parameters('listOfResourceTypesWithDiagnosticLogsEnabled')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2019-04-01-preview",
+            "name": "[variables('roleAssignmentNames').auditIso27001]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Authorization/policyAssignments', variables('policyAssignmentNames').auditIso27001)]"
+            ],
+            "properties": {
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[concat('/providers/Microsoft.Authorization/roleDefinitions/', variables('rbac'))]",
+                "principalId": "[toLower(reference(concat('/providers/Microsoft.Authorization/policyAssignments/', variables('policyAssignmentNames').auditIso27001), '2018-05-01', 'Full' ).identity.principalId)]"
+            }
+        }
+    ],
+    "outputs": {
+    }
+}

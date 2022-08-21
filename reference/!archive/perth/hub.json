@@ -1,0 +1,1490 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "companyPrefix": {
+            "type": "string",
+            "maxLength": 5,
+            "metadata": {
+                "description": "Provide the prefix (max 5 characters) to the management group hierarchy that will be created"
+            }
+        },
+        "locationPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the location identifier prefix (3 characters)"
+            }
+        },
+        "platformPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Platform identifier prefix (3 characters)"
+            }
+        },
+        "argPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the resource group identifier"
+            }
+        },
+        "omsPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the log analytics identifier prefix"
+            }
+        },
+        "aaaPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Azure Automation identifier prefix"
+            }
+        },
+        "staPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Azure Storage identifier prefix"
+            }
+        },
+        "akvPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Azure Key Vault identifier prefix"
+            }
+        },
+        "rsvPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Recovery Services Vault prefix"
+            }
+        },
+        "vngPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the virtual network gateway identifier prefix"
+            }
+        },
+        "vntPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the virtual network identifier prefix"
+            }
+        },
+        "pipPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the public IP identifier prefix"
+            }
+        },
+        "azFwPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Azure Firewall identifier prefix"
+            }
+        },
+        "udrPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Route Table identifier prefix"
+            }
+        },
+        "nsgPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Network Security Group identifier prefix"
+            }
+        },
+        "basPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Azure Bastion prefix"
+            }
+        },
+        "subscriptionTag": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide the value for the environment tag"
+            }
+        },
+        "ownerTag": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide the value for the owner tag"
+            }
+        },
+        "costCenterTag": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide the value for the cost center tag"
+            }
+        },
+        "subscriptionId": {
+            "type": "string",
+            "defaultValue": "",
+            "maxLength": 36
+        },
+        "enableLogAnalytics": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "metadata": {
+                "description": "If 'Yes' is selected when also adding a subscription for management, ARM will assign two policies to enable auditing in your environment, into the Log Analytics workspace for platform monitoring. If 'No', it will be ignored."
+            }
+        },
+        "retentionInDays": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "enableAsc": {
+            "type": "string",
+            "defaultValue": "No",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "metadata": {
+                "description": "If 'Yes' is selected when also adding a subscription for management, ARM will assign two policies to enable auditing in your environment, into the Log Analytics workspace for platform monitoring. If 'No', it will be ignored."
+            }
+        },
+        "emailContactAsc": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide the Azure Security Center Email Contact"
+            }
+        },
+        "enableAscForServers": {
+            "type": "string",
+            "defaultValue": "Free",
+            "allowedValues": [
+                "Standard",
+                "Free"
+            ]
+        },
+        "enableAscForAppServices": {
+            "type": "string",
+            "defaultValue": "Free",
+            "allowedValues": [
+                "Standard",
+                "Free"
+            ]
+        },
+        "enableAscForStorage": {
+            "type": "string",
+            "defaultValue": "Free",
+            "allowedValues": [
+                "Standard",
+                "Free"
+            ]
+        },
+        "enableAscForSql": {
+            "type": "string",
+            "defaultValue": "Free",
+            "allowedValues": [
+                "Standard",
+                "Free"
+            ]
+        },
+        "enableAscForSqlOnVm": {
+            "type": "string",
+            "defaultValue": "Free",
+            "allowedValues": [
+                "Standard",
+                "Free"
+            ]
+        },
+        "enableAscForKeyVault": {
+            "type": "string",
+            "defaultValue": "Free",
+            "allowedValues": [
+                "Standard",
+                "Free"
+            ]
+        },
+        "enableAscForArm": {
+            "type": "string",
+            "defaultValue": "Free",
+            "allowedValues": [
+                "Standard",
+                "Free"
+            ]
+        },
+        "enableAscForDns": {
+            "type": "string",
+            "defaultValue": "Free",
+            "allowedValues": [
+                "Standard",
+                "Free"
+            ]
+        },
+        "enableAscForKubernetes": {
+            "type": "string",
+            "defaultValue": "Free",
+            "allowedValues": [
+                "Standard",
+                "Free"
+            ]
+        },
+        "enableAscForRegistries": {
+            "type": "string",
+            "defaultValue": "Free",
+            "allowedValues": [
+                "Standard",
+                "Free"
+            ]
+        },
+        "enableSecuritySolution": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableAgentHealth": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableChangeTracking": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableUpdateMgmt": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableActivityLog": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableAntiMalware": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableVmInsights": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableServiceMap": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableSqlAssessment": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableKeyVaultAnalytics": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableStorage": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "metadata": {
+                "description": "If 'Yes' is selected then an Azure Storage Account will be deployed."
+            }
+        },
+        "enableLtrStorage": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "metadata": {
+                "description": "If 'Yes' is selected then Long Term Retention to Storage will be enabled."
+            }
+        },
+        "enableRsv": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "metadata": {
+                "description": "If 'Yes' is selected then a Recovery Services Vault will be deployed."
+            }
+        },
+        "enableHub": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "enablePrivateDnsZones": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "enablePrivateDnsZonesTable": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "enablePrivateDnsZonesQueue": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "enablePrivateDnsZonesFiles": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "enablePrivateDnsZonesBlob": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "enablePrivateDnsZonesAkv": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "enableAzFw": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "enableAzFwDnsProxy": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "No"
+        },
+        "enableVpnGw": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableErGw": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "gwRegionalOrAz": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "gwAzSku": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "gwRegionalSku": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "erRegionalOrAz": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "erAzSku": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "erRegionalSku": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "firewallZones": {
+            "type": "array",
+            "defaultValue": []
+        },
+        "enableAppGw": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "No"
+        },
+        "enableAzBastion": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "No"
+        },
+        "enableMgmt": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "No"
+        },
+        "enableIdentity": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "No"
+        },
+        "subnetMaskForAzBastion": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "subnetMaskForAzFw": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "subnetMaskForGw": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "subnetMaskForAppGw": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "subnetMaskForMgmt": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "subnetMaskForIdentity": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[deployment().location]"
+        },
+        "addressPrefix": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "enableSqlAudit": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableAksPolicy": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "denyAksPrivileged": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "denyAksPrivilegedEscalation": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "denyHttpIngressForAks": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableSqlEncryption": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "denyPip": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "denyRdp": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableStorageHttps": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "denyIpForwarding": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "denySubnetWithoutNsg": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "denySsh": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "denyPublicEndpoints": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableEncryptionInTransit": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "denyPrivateDnsZones": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "paToken": {
+            "type": "securestring",
+            "defaultValue": ""
+        },
+        "principalId": {
+            "type": "array",
+            "defaultValue": []
+        },
+        "appId": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "principalSecret": {
+            "type": "securestring",
+            "defaultValue": ""
+        },
+        "gitHubUserNameOrOrg": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "repositoryName": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "enableAzOps": {
+            "type": "string",
+            "defaultValue": "No",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        }
+    },
+    "variables": {
+        "azPolicyEnvMapping": {
+            "https://management.azure.com/": "armTemplates/policies.json"
+        },
+        "azEnvPolicy": "[variables('azPolicyEnvMapping')[environment().resourceManager]]",
+        "deploymentUris": {
+            "managementGroups": "[uri(deployment().properties.templateLink.uri, 'armTemplates/mgmtGroups.json')]",
+            "policyDefinitions": "[concat(uri(deployment().properties.templateLink.uri, variables('azEnvPolicy')))]",
+            "monitoring": "[uri(deployment().properties.templateLink.uri, 'armTemplates/logAnalytics.json')]",
+            "monitoringSolutions": "[uri(deployment().properties.templateLink.uri, 'armTemplates/logAnalyticsSolutions.json')]",
+            "storage": "[uri(deployment().properties.templateLink.uri, 'armTemplates/storage.json')]",
+            "recoveryServicesVault": "[uri(deployment().properties.templateLink.uri, 'armTemplates/recoveryServicesVault.json')]",
+            "privateDns": "[uri(deployment().properties.templateLink.uri, 'armTemplates/privateDns.json')]",
+            "landingZone": "[uri(deployment().properties.templateLink.uri, 'armTemplates/lz.json')]",
+            "diagnosticsAndSecurity": "[uri(deployment().properties.templateLink.uri, 'armTemplates/diagnosticsAndSecurity.json')]",
+            "connectivity": "[uri(deployment().properties.templateLink.uri, 'armTemplates/hubConnectivity.json')]",
+            "azOps": "[uri(deployment().properties.templateLink.uri, 'armTemplates/azOpsSetup.json')]"
+        },
+        "moveSubscription": "[concat(parameters('companyPrefix'), '-platform', '/', parameters('subscriptionId'))]",
+        "noSubscription": "[concat(parameters('companyPrefix'), '-platform', '/', 'na')]",
+        "deploymentNames": {
+            "managementGroups": "[take(concat('mgmtGroups', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "policyDefinitions": "[take(concat('policyDef', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "monitoring": "[take(concat('monitoring', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "monitoringSolutions": "[take(concat('monSolutions', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "diagnosticsAndSecurity": "[take(concat('diagSecurity', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "connectivity": "[take(concat('connectivity', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "landingZone": "[take(concat('lz', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "storage": "[take(concat('storage', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "recoveryServicesVault": "[take(concat('rsv', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "privateDns": "[take(concat('privateDns', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "azOps": "[take(concat('azOps', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]"
+        },
+        "apiVersions": {
+            "deployments": "2020-06-01",
+            "subscriptions": "2020-05-01"
+        }
+    },
+    "resources": [
+        {
+            "comments": "Linked template for the creation of the Management Group structure",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "name": "[variables('deploymentNames').managementGroups]",
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').managementGroups]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template for the creation of Azure Policy Definitions at the root Management Group",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "name": "[variables('deploymentNames').policyDefinitions]",
+            "location": "[deployment().location]",
+            "scope": "[concat('Microsoft.Management/managementGroups/', parameters('companyPrefix'))]",
+            "dependsOn": [
+                "[variables('deploymentNames').managementGroups]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').policyDefinitions]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Delay Counter",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "name": "[concat('preparingToLaunch', copyIndex())]",
+            "location": "[deployment().location]",
+            "scope": "[concat('Microsoft.Management/managementGroups/', parameters('companyPrefix'))]",
+            "dependsOn": [
+                "[variables('deploymentNames').policyDefinitions]"
+            ],
+            "copy": {
+                "batchSize": 1,
+                "count": 10,
+                "mode": "Serial",
+                "name": "policyCompletion"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "resources": [],
+                    "outputs": {}
+                }
+            }
+        },
+        {
+            "comments": "Move the Subscription to the appropriate Management Group or skip if not used. (Platform Subscription)",
+            "condition": "[not(empty(parameters('subscriptionId')))]",
+            "type": "Microsoft.Management/managementGroups/subscriptions",
+            "apiVersion": "[variables('apiVersions').subscriptions]",
+            "name": "[if(not(empty(parameters('subscriptionId'))), variables('moveSubscription'), variables('noSubscription'))]",
+            "dependsOn": [
+                "[variables('deploymentNames').managementGroups]"
+            ],
+            "properties": {}
+        },
+        {
+            "comments": "Linked template for the creation of a Log Analytics Workspace and Automation account in the Platform Management Subscription",
+            "condition": "[and(not(empty(parameters('subscriptionId'))),equals(parameters('enableLogAnalytics'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "scope": "[concat('Microsoft.Management/managementGroups/', parameters('companyPrefix'), '-platform')]",
+            "name": "[variables('deploymentNames').monitoring]",
+            "dependsOn": [
+                "[variables('deploymentNames').policyDefinitions]",
+                "policyCompletion"
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').monitoring]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "platformPrefix": {
+                        "value": "[parameters('platformPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "omsPrefix": {
+                        "value": "[parameters('omsPrefix')]"
+                    },
+                    "aaaPrefix": {
+                        "value": "[parameters('aaaPrefix')]"
+                    },
+                    "subscriptionId": {
+                        "value": "[parameters('subscriptionId')]"
+                    },
+                    "enableLogAnalytics": {
+                        "value": "[parameters('enableLogAnalytics')]"
+                    },
+                    "retentionInDays": {
+                        "value": "[parameters('retentionInDays')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template for the creation of Log Analytics Solutions in the Platform Subscription",
+            "condition": "[and(not(empty(parameters('subscriptionId'))), or(or(or(or(or(equals(parameters('enableSecuritySolution'), 'Yes'), equals(parameters('enableAgentHealth'), 'Yes')), equals(parameters('enableChangeTracking'), 'Yes')), equals(parameters('enableUpdateMgmt'), 'Yes'), equals(parameters('enableActivityLog'), 'Yes')), equals(parameters('enableAntiMalware'), 'Yes'), equals(parameters('enableVmInsights'), 'Yes')), equals(parameters('enableServiceMap'), 'Yes'), equals(parameters('enableSqlAssessment'), 'Yes'), equals(parameters('enableKeyVaultAnalytics'), 'Yes')))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "subscriptionId": "[parameters('subscriptionId')]",
+            "name": "[variables('deploymentNames').monitoringSolutions]",
+            "dependsOn": [
+                "[variables('deploymentNames').monitoring]"
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').monitoringSolutions]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "platformPrefix": {
+                        "value": "[parameters('platformPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "omsPrefix": {
+                        "value": "[parameters('omsPrefix')]"
+                    },
+                    "subscriptionId": {
+                        "value": "[parameters('subscriptionId')]"
+                    },
+                    "enableSecuritySolution": {
+                        "value": "[parameters('enableSecuritySolution')]"
+                    },
+                    "enableAgentHealth": {
+                        "value": "[parameters('enableAgentHealth')]"
+                    },
+                    "enableChangeTracking": {
+                        "value": "[parameters('enableChangeTracking')]"
+                    },
+                    "enableUpdateMgmt": {
+                        "value": "[parameters('enableUpdateMgmt')]"
+                    },
+                    "enableActivityLog": {
+                        "value": "[parameters('enableActivityLog')]"
+                    },
+                    "enableAntiMalware": {
+                        "value": "[parameters('enableAntiMalware')]"
+                    },
+                    "enableVmInsights": {
+                        "value": "[parameters('enableVmInsights')]"
+                    },
+                    "enableServiceMap": {
+                        "value": "[parameters('enableServiceMap')]"
+                    },
+                    "enableSqlAssessment": {
+                        "value": "[parameters('enableSqlAssessment')]"
+                    },
+                    "enableKeyVaultAnalytics": {
+                        "value": "[parameters('enableKeyVaultAnalytics')]"
+                    },
+                    "subscriptionTag": {
+                        "value": "[parameters('subscriptionTag')]"
+                    },
+                    "ownerTag": {
+                        "value": "[parameters('ownerTag')]"
+                    },
+                    "costCenterTag": {
+                        "value": "[parameters('costCenterTag')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template for the creation of a Recovery Services Vault for the Platform Subscription",
+            "condition": "[and(not(empty(parameters('subscriptionId'))),equals(parameters('enableRsv'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "subscriptionId": "[parameters('subscriptionId')]",
+            "name": "[variables('deploymentNames').recoveryServicesVault]",
+            "dependsOn": [
+                "policyCompletion"
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').recoveryServicesVault]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "platformPrefix": {
+                        "value": "[parameters('platformPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "rsvPrefix": {
+                        "value": "[parameters('rsvPrefix')]"
+                    },
+                    "enableRsv": {
+                        "value": "[parameters('enableRsv')]"
+                    },
+                    "subscriptionTag": {
+                        "value": "[parameters('subscriptionTag')]"
+                    },
+                    "ownerTag": {
+                        "value": "[parameters('ownerTag')]"
+                    },
+                    "costCenterTag": {
+                        "value": "[parameters('costCenterTag')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template for the creation of an Azure Storage account in the Platform Subscription",
+            "condition": "[and(not(empty(parameters('subscriptionId'))),equals(parameters('enableStorage'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "subscriptionId": "[parameters('subscriptionId')]",
+            "name": "[variables('deploymentNames').storage]",
+            "dependsOn": [
+                "policyCompletion"
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').storage]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "platformPrefix": {
+                        "value": "[parameters('platformPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "staPrefix": {
+                        "value": "[parameters('staPrefix')]"
+                    },
+                    "enableStorage": {
+                        "value": "[parameters('enableStorage')]"
+                    },
+                    "subscriptionTag": {
+                        "value": "[parameters('subscriptionTag')]"
+                    },
+                    "ownerTag": {
+                        "value": "[parameters('ownerTag')]"
+                    },
+                    "costCenterTag": {
+                        "value": "[parameters('costCenterTag')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template for the creation of Azure Policy Assignments for Landing Zone Subscriptions",
+            "condition": "[or(or(or(or(or(equals(parameters('denySubnetWithoutNsg'), 'Yes'), equals(parameters('denyRdp'), 'Yes'), equals(parameters('denyIpForwarding'), 'Yes')), equals(parameters('enableSqlEncryption'), 'Yes'), equals(parameters('enableSqlAudit'), 'Yes')), equals(parameters('enableStorageHttps'), 'Yes'), equals(parameters('enableAksPolicy'), 'Yes')), equals(parameters('denyAksPrivileged'), 'Yes'), equals(parameters('denyAksPrivilegedEscalation'), 'Yes')), equals(parameters('denyHttpIngressForAks'), 'Yes'), equals(parameters('denySsh'), 'Yes'), equals(parameters('denyPrivateDnsZones'), 'Yes'), equals(parameters('denyPip'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "scope": "[concat('Microsoft.Management/managementGroups/', parameters('companyPrefix'), '-landingzones')]",
+            "name": "[variables('deploymentNames').landingZone]",
+            "dependsOn": [
+                "[variables('deploymentNames').policyDefinitions]",
+                "policyCompletion"
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').landingZone]"
+                },
+               "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "enableSqlAudit": {
+                        "value": "[parameters('enableSqlAudit')]"
+                    },
+                    "enableAksPolicy": {
+                        "value": "[parameters('enableAksPolicy')]"
+                    },
+                    "denyAksPrivileged": {
+                        "value": "[parameters('denyAksPrivileged')]"
+                    },
+                    "denyAksPrivilegedEscalation": {
+                        "value": "[parameters('denyAksPrivilegedEscalation')]"
+                    },
+                    "denyHttpIngressForAks": {
+                        "value": "[parameters('denyHttpIngressForAks')]"
+                    },
+                    "enableSqlEncryption": {
+                        "value": "[parameters('enableSqlEncryption')]"
+                    },
+                    "denyPip": {
+                        "value": "[parameters('denyPip')]"
+                    },
+                    "denyRdp": {
+                        "value": "[parameters('denyRdp')]"
+                    },
+                    "enableStorageHttps": {
+                        "value": "[parameters('enableStorageHttps')]"
+                    },
+                    "denyIpForwarding": {
+                        "value": "[parameters('denyIpForwarding')]"
+                    },
+                    "denySubnetWithoutNsg": {
+                        "value": "[parameters('denySubnetWithoutNsg')]"
+                    },
+                    "denySsh": {
+                        "value": "[parameters('denySsh')]"
+                    },
+                    "denyPublicEndpoints": {
+                        "value": "[parameters('denyPublicEndpoints')]"
+                    },
+                    "enableEncryptionInTransit": {
+                        "value": "[parameters('enableEncryptionInTransit')]"
+                    },
+                    "denyPrivateDnsZones": {
+                        "value": "[parameters('denyPrivateDnsZones')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template for the creation of Diagnostics and Security controls for the Platform Subscription",
+            "condition": "[and(not(empty(parameters('subscriptionId'))), and(equals(parameters('enableLogAnalytics'), 'Yes'),  equals(parameters('enableAsc'), 'Yes')))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "scope": "[concat('Microsoft.Management/managementGroups/', parameters('companyPrefix'))]",
+            "name": "[variables('deploymentNames').diagnosticsAndSecurity]",
+            "dependsOn": [
+                "[variables('deploymentNames').monitoring]"
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').diagnosticsAndSecurity]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "platformPrefix": {
+                        "value": "[parameters('platformPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "omsPrefix": {
+                        "value": "[parameters('omsPrefix')]"
+                    },
+                    "staPrefix": {
+                        "value": "[parameters('staPrefix')]"
+                    },
+                    "enableLogAnalytics": {
+                        "value": "[parameters('enableLogAnalytics')]"
+                    },
+                    "enableAsc": {
+                        "value": "[parameters('enableAsc')]"
+                    },
+                    "emailContactAsc": {
+                        "value": "[parameters('emailContactAsc')]"
+                    },
+                    "enableAscForServers": {
+                        "value": "[parameters('enableAscForServers')]"
+                    },
+                    "enableAscForAppServices": {
+                        "value": "[parameters('enableAscForAppServices')]"
+                    },
+                    "enableAscForStorage": {
+                        "value": "[parameters('enableAscForStorage')]"
+                    },
+                    "enableAscForSql": {
+                        "value": "[parameters('enableAscForSql')]"
+                    },
+                    "enableAscForSqlOnVm": {
+                        "value": "[parameters('enableAscForSqlOnVm')]"
+                    },
+                    "enableAscForKeyVault": {
+                        "value": "[parameters('enableAscForKeyVault')]"
+                    },
+                    "enableAscForArm": {
+                        "value": "[parameters('enableAscForArm')]"
+                    },
+                    "enableAscForDns": {
+                        "value": "[parameters('enableAscForDns')]"
+                    },
+                    "enableAscForKubernetes": {
+                        "value": "[parameters('enableAscForKubernetes')]"
+                    },
+                    "enableAscForRegistries": {
+                        "value": "[parameters('enableAscForRegistries')]"
+                    },
+                    "enableLtrStorage": {
+                        "value": "[parameters('enableLtrStorage')]"
+                    },
+                    "subscriptionId": {
+                        "value": "[parameters('subscriptionId')]"
+                    },
+                    "subscriptionTag": {
+                        "value": "[parameters('subscriptionTag')]"
+                    },
+                    "ownerTag": {
+                        "value": "[parameters('ownerTag')]"
+                    },
+                    "costCenterTag": {
+                        "value": "[parameters('costCenterTag')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template for the creation of Network Connectivity resources in the Platform Subscription",
+            "condition": "[and(not(empty(parameters('subscriptionId'))),equals(parameters('enableHub'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "scope": "[concat('Microsoft.Management/managementGroups/', parameters('companyPrefix'), '-platform')]",
+            "name": "[variables('deploymentNames').connectivity]",
+            "dependsOn": [
+                "[variables('deploymentNames').diagnosticsAndSecurity]"
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').connectivity]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "platformPrefix": {
+                        "value": "[parameters('platformPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "vngPrefix": {
+                        "value": "[parameters('vngPrefix')]"
+                    },
+                    "vntPrefix": {
+                        "value": "[parameters('vntPrefix')]"
+                    },
+                    "pipPrefix": {
+                        "value": "[parameters('pipPrefix')]"
+                    },
+                    "azFwPrefix": {
+                        "value": "[parameters('azFwPrefix')]"
+                    },
+                    "udrPrefix": {
+                        "value": "[parameters('udrPrefix')]"
+                    },
+                    "nsgPrefix": {
+                        "value": "[parameters('nsgPrefix')]"
+                    },
+                    "basPrefix": {
+                        "value": "[parameters('basPrefix')]"
+                    },
+                    "subscriptionTag": {
+                        "value": "[parameters('subscriptionTag')]"
+                    },
+                    "ownerTag": {
+                        "value": "[parameters('ownerTag')]"
+                    },
+                    "costCenterTag": {
+                        "value": "[parameters('costCenterTag')]"
+                    },
+                    "addressPrefix": {
+                        "value": "[parameters('addressPrefix')]"
+                    },
+                    "enableHub": {
+                        "value": "[parameters('enableHub')]"
+                    },
+                    "enableAzFw": {
+                        "value": "[parameters('enableAzFw')]"
+                    },
+                    "firewallZones": {
+                        "value": "[parameters('firewallZones')]"
+                    },
+                    "enableAzFwDnsProxy": {
+                        "value": "[parameters('enableAzFwDnsProxy')]"
+                    },
+                    "enableAzBastion": {
+                        "value": "[parameters('enableAzBastion')]"
+                    },
+                    "enableVpnGw": {
+                        "value": "[parameters('enableVpnGw')]"
+                    },
+                    "enableErGw": {
+                        "value": "[parameters('enableErGw')]"
+                    },
+                    "gwRegionalOrAz": {
+                        "value": "[parameters('gwRegionalOrAz')]"
+                    },
+                    "gwAzSku": {
+                        "value": "[parameters('gwAzSku')]"
+                    },
+                    "gwRegionalSku": {
+                        "value": "[parameters('gwRegionalSku')]"
+                    },
+                    "erRegionalOrAz": {
+                        "value": "[parameters('erRegionalOrAz')]"
+                    },
+                    "erAzSku": {
+                        "value": "[parameters('erAzSku')]"
+                    },
+                    "erRegionalSku": {
+                        "value": "[parameters('erRegionalSku')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "subscriptionId": {
+                        "value": "[parameters('subscriptionId')]"
+                    },
+                    "subnetMaskForAzFw": {
+                        "value": "[parameters('subnetMaskForAzFw')]"
+                    },
+                    "subnetMaskForAzBastion": {
+                        "value": "[parameters('subnetMaskForAzBastion')]"
+                    },
+                    "subnetMaskForGw": {
+                        "value": "[parameters('subnetMaskForGw')]"
+                    },
+                    "enableAppGw": {
+                        "value": "[parameters('enableAppGw')]"
+                    },
+                    "enableMgmt": {
+                        "value": "[parameters('enableMgmt')]"
+                    },
+                    "enableIdentity": {
+                        "value": "[parameters('enableIdentity')]"
+                    },
+                    "subnetMaskForAppGw": {
+                        "value": "[parameters('subnetMaskForAppGw')]"
+                    },
+                    "subnetMaskForMgmt": {
+                        "value": "[parameters('subnetMaskForMgmt')]"
+                    },
+                    "subnetMaskForIdentity": {
+                        "value": "[parameters('subnetMaskForIdentity')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template for the creation of Private DNS resources in the Platform Subscription",
+            "condition": "[and(not(empty(parameters('subscriptionId'))),equals(parameters('enablePrivateDnsZones'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "subscriptionId": "[parameters('subscriptionId')]",
+            "name": "[variables('deploymentNames').privateDns]",
+            "dependsOn": [
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').privateDns]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "platformPrefix": {
+                        "value": "[parameters('platformPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "enablePrivateDnsZones": {
+                        "value": "[parameters('enablePrivateDnsZones')]"
+                    },
+                    "enablePrivateDnsZonesTable": {
+                        "value": "[parameters('enablePrivateDnsZonesTable')]"
+                    },
+                    "enablePrivateDnsZonesQueue": {
+                        "value": "[parameters('enablePrivateDnsZonesQueue')]"
+                    },
+                    "enablePrivateDnsZonesFiles": {
+                        "value": "[parameters('enablePrivateDnsZonesFiles')]"
+                    },
+                    "enablePrivateDnsZonesBlob": {
+                        "value": "[parameters('enablePrivateDnsZonesBlob')]"
+                    },
+                    "enablePrivateDnsZonesAkv": {
+                        "value": "[parameters('enablePrivateDnsZonesAkv')]"
+                    },
+                    "subscriptionId": {
+                        "value": "[parameters('subscriptionId')]"
+                    },
+                    "subscriptionTag": {
+                        "value": "[parameters('subscriptionTag')]"
+                    },
+                    "ownerTag": {
+                        "value": "[parameters('ownerTag')]"
+                    },
+                    "costCenterTag": {
+                        "value": "[parameters('costCenterTag')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template for the creation of the GitHub Repo for storing the current state of the Azure environment",
+            "condition": "[and(equals(parameters('enableAzOps'), 'Yes'), not(empty(parameters('principalSecret'))))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "scope": "[concat('Microsoft.Management/managementGroups/', parameters('companyPrefix'))]",
+            "name": "[variables('deploymentNames').azOps]",
+            "location": "[deployment().location]",
+            "dependsOn": [
+                "[variables('deploymentNames').landingZone]",
+                "[variables('deploymentNames').diagnosticsAndSecurity]",
+                "[variables('deploymentNames').managementGroups]",
+                "[variables('deploymentNames').monitoring]",
+                "[variables('deploymentNames').monitoringSolutions]",
+                "[variables('deploymentNames').policyDefinitions]",
+                "[variables('deploymentNames').connectivity]",
+                "policyCompletion"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').azOps]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "platformPrefix": {
+                        "value": "[parameters('platformPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "akvPrefix": {
+                        "value": "[parameters('akvPrefix')]"
+                    },
+                    "enableAzOps": {
+                        "value": "[parameters('enableAzOps')]"
+                    },
+                    "principalId": {
+                        "value": "[parameters('principalId')]"
+                    },
+                    "principalSecret": {
+                        "value": "[parameters('principalSecret')]"
+                    },
+                    "gitHubUserNameOrOrg": {
+                        "value": "[parameters('gitHubUserNameOrOrg')]"
+                    },
+                    "paToken": {
+                        "value": "[parameters('paToken')]"
+                    },
+                    "subscriptionId": {
+                        "value": "[parameters('subscriptionId')]"
+                    },
+                    "appId": {
+                        "value": "[parameters('appId')]"
+                    },
+                    "repositoryName": {
+                        "value": "[parameters('repositoryName')]"
+                    },
+                    "subscriptionTag": {
+                        "value": "[parameters('subscriptionTag')]"
+                    },
+                    "ownerTag": {
+                        "value": "[parameters('ownerTag')]"
+                    },
+                    "costCenterTag": {
+                        "value": "[parameters('costCenterTag')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "deployment": {
+            "type": "string",
+            "value": "[concat(deployment().name, ' has successfully deployed. Welcome to Azure Foundations!')]"
+        }
+    }
+}

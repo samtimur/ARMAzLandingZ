@@ -1,0 +1,105 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "rgName": {
+      "type": "String"
+    },
+    "workspaceName": {
+      "type": "String"
+    },
+    "workspaceRegion": {
+      "type": "String"
+    },
+    "automationAccountName": {
+      "type": "String"
+    },
+    "automationRegion": {
+      "type": "String"
+    },
+    "retentionInDays": {
+      "type": "String"
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2018-05-01",
+      "name": "[parameters('rgName')]",
+      "location": "[deployment().location]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "[take(concat('logAnalytics-', guid(deployment().name)), 64)]",
+      "resourceGroup": "[parameters('rgName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/resourceGroups/', parameters('rgName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "variables": {},
+          "resources": [
+            {
+              "comments": "Deploy Resource Group Lock",
+              "type": "Microsoft.Authorization/locks",
+              "apiVersion": "2016-09-01",
+              "name": "ResourceGroup-DontDelete",
+              "properties": {
+                "level": "CanNotDelete",
+                "notes": "Prevent deletion of the resourceGroup"
+              }
+            },
+            {
+              "type": "Microsoft.Automation/automationAccounts",
+              "apiVersion": "2019-06-01",
+              "name": "[parameters('AutomationAccountName')]",
+              "location": "[parameters('AutomationRegion')]",
+              "properties": {
+                "sku": {
+                  "name": "Basic"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2020-08-01",
+              "name": "[parameters('workspaceName')]",
+              "location": "[parameters('workspaceRegion')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "enableLogAccessUsingOnlyResourcePermissions": true,
+                "retentionInDays": "[int(parameters('retentionInDays'))]"
+              },
+              "resources": [
+                {
+                  "name": "Automation",
+                  "type": "linkedServices",
+                  "apiVersion": "2020-08-01",
+                  "dependsOn": [
+                    "[concat(subscription().id, '/resourceGroups/', parameters('rgName'), '/providers/Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'))]",
+                    "[concat(subscription().id, '/resourceGroups/', parameters('rgName'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+                  ],
+                  "properties": {
+                    "resourceId": "[concat(subscription().id, '/resourceGroups/', parameters('rgName'), '/providers/Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'))]"
+                  }
+                }
+              ]
+            }
+          ],
+          "outputs": {}
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

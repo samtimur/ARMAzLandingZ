@@ -1,0 +1,80 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "enableBudget": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "amount": {
+            "type": "string"
+        },
+        "startDate": {
+            "type": "string",
+            "defaultValue": "[concat(utcNow('MM'), '/01/', utcNow('yyyy'))]"
+        },
+        "timeGrain": {
+            "type": "string",
+            "allowedValues": [
+                "Monthly",
+                "Quarterly",
+                "Annually"
+            ],
+            "metadata": {
+                "description": "The time covered by a budget. Tracking of the amount will be reset based on the time grain."
+            }
+        },
+        "contactEmails": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "apiVersions": {
+            "budgets": "2019-10-01"
+        },
+        "subscriptionid": "[subscription().subscriptionId]",
+        "budget": {
+            "name": "[toLower(concat(variables('subscriptionId'), '-budget'))]",
+            "firstThreshold": "80",
+            "secondThreshold": "100",
+            "contactRoles": "Owner"
+        }
+    },
+    "resources": [
+        {
+            "comments": "Deploy the Azure Budget to the Target Subscription",
+            "condition": "[equals(parameters('enableBudget'), 'Yes')]",
+            "type": "Microsoft.Consumption/budgets",
+            "apiVersion": "[variables('apiVersions').budgets]",
+            "name": "[variables('budget').name]",
+            "properties": {
+                "timePeriod": {
+                    "startDate": "[parameters('startDate')]"
+                },
+                "timeGrain": "[parameters('timeGrain')]",
+                "amount": "[parameters('amount')]",
+                "category": "Cost",
+                "notifications": {
+                    "NotificationForExceededBudget1": {
+                        "enabled": true,
+                        "operator": "GreaterThan",
+                        "threshold": "[variables('budget').firstThreshold]",
+                        "contactEmails": "[parameters('contactEmails')]",
+                        "contactRoles": "[variables('budget').contactRoles]"
+                    },
+                    "NotificationForExceededBudget2": {
+                        "enabled": true,
+                        "operator": "GreaterThan",
+                        "threshold": "[variables('budget').secondThreshold]",
+                        "contactEmails": "[parameters('contactEmails')]",
+                        "contactRoles": "[variables('budget').contactRoles]"
+                    }
+                }
+            }
+        }
+    ]
+}

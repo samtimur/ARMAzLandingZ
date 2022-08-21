@@ -1,0 +1,135 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "companyPrefix": {
+            "type": "string",
+            "maxLength": 5
+        },
+        "locationPrefix": {
+            "type": "string"
+        },
+        "platformPrefix": {
+            "type": "string"
+        },
+        "argPrefix": {
+            "type": "string"
+        },
+        "omsPrefix": {
+            "type": "string"
+        },
+        "aaaPrefix": {
+            "type": "string"
+        },
+        "subscriptionId": {
+            "type": "string",
+            "defaultValue": "",
+            "maxLength": 36
+        },
+        "enableLogAnalytics": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "retentionInDays": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "policyDefinitions": {
+            "deployLogAnalytics": "[concat('/providers/Microsoft.Management/managementGroups/', parameters('companyPrefix'), '/providers/Microsoft.Authorization/policyDefinitions/deploy-log-analytics')]"
+        },
+        "policyAssignmentNames": {
+            "logAnalytics": "deploy-log-analytics"
+        },
+        "rbacOwner": "8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+        "roleAssignmentNames": {
+            "deployLogAnalytics": "[guid(concat(parameters('companyPrefix'), variables('policyAssignmentNames').logAnalytics))]"
+        },
+        "resourceDeploymentName": "[take(concat('logAnalytics', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+        "namingPrefix": "[concat(parameters('companyPrefix'), '-', parameters('locationPrefix'), '-', parameters('platformPrefix'))]",
+        "resourceGroupName": "[toLower(concat(variables('namingPrefix'), '-', parameters('argPrefix'), '-monitoring'))]",
+        "logAnalyticsName": "[toLower(take(concat(variables('namingPrefix'), '-', parameters('omsPrefix'), '-', guid(parameters('companyPrefix'))), 24))]",
+        "azAutomationName": "[toLower(take(concat(variables('namingPrefix'), '-', parameters('aaaPrefix'), '-', guid(parameters('companyPrefix'))), 24))]",
+        "apiVersions": {
+            "deployments": "2020-06-01",
+            "policyAssignments": "2020-03-01",
+            "roleAssignments": "2020-04-01-preview"
+        }
+    },
+    "resources": [
+        {
+            "comments": "Conditional Azure Policy Assignment to enable Log Analytics and Azure Automation",
+            "condition": "[and(not(empty(parameters('subscriptionId'))),equals(parameters('enableLogAnalytics'), 'Yes'))]",
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "[variables('apiVersions').policyAssignments]",
+            "name": "[variables('policyAssignmentNames').logAnalytics]",
+            "location": "[deployment().location]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "description": "[variables('policyAssignmentNames').logAnalytics]",
+                "displayName": "[variables('policyAssignmentNames').logAnalytics]",
+                "policyDefinitionId": "[variables('policyDefinitions').deployLogAnalytics]",
+                "scope": "[concat('/providers/Microsoft.Management/managementGroups/', parameters('companyPrefix'), '-platform')]",
+                "parameters": {
+                    "workspaceName": {
+                        "value": "[variables('logAnalyticsName')]"
+                    },
+                    "automationAccountName": {
+                        "value": "[variables('azAutomationName')]"
+                    },
+                    "workspaceRegion": {
+                        "value": "[deployment().location]"
+                    },
+                    "automationRegion": {
+                        "value": "[deployment().location]"
+                    },
+                    "rgName": {
+                        "value": "[variables('resourceGroupName')]"
+                    },
+                    "retentionInDays": {
+                        "value": "[parameters('retentionInDays')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Conditional role assignment for the policy that will deploy Log Analytics and Azure Automation",
+            "condition": "[and(not(empty(parameters('subscriptionId'))),equals(parameters('enableLogAnalytics'), 'Yes'))]",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "[variables('apiVersions').roleAssignments]",
+            "name": "[variables('roleAssignmentNames').deployLogAnalytics]",
+            "dependsOn": [
+                "[variables('policyAssignmentNames').logAnalytics]"
+            ],
+            "properties": {
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[concat('/providers/Microsoft.Authorization/roleDefinitions/', variables('rbacOwner'))]",
+                "principalId": "[toLower(reference(concat('/providers/Microsoft.Authorization/policyAssignments/', variables('policyAssignmentNames').logAnalytics), '2018-05-01', 'Full' ).identity.principalId)]"
+            }
+        },
+        {
+            "comments": "Conditional deployment for Log Analytics & Azure Automation in the Platform subscription",
+            "condition": "[and(not(empty(parameters('subscriptionId'))),equals(parameters('enableLogAnalytics'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "name": "[variables('resourceDeploymentName')]",
+            "location": "[deployment().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Authorization/roleAssignments/', variables('roleAssignmentNames').deployLogAnalytics)]"
+            ],
+            "subscriptionId": "[parameters('subscriptionId')]",
+            "properties": {
+                "mode": "incremental",
+                "template": "[reference(variables('policyDefinitions').deployLogAnalytics, '2018-05-01').policyRule.then.details.deployment.properties.template]",
+                "parameters": "[reference(concat('/providers/Microsoft.Management/managementGroups/', parameters('companyPrefix'), '-platform', '/providers/Microsoft.Authorization/policyAssignments/', variables('policyAssignmentNames').logAnalytics), '2018-05-01').parameters]"
+            }
+        }
+    ],
+    "outputs": {}
+}

@@ -1,0 +1,100 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "lawResourceId": {
+            "type": "string",
+            "defaultValue": "/subscriptions/8f8224ca-1a9c-46d1-9206-1cf2a7c51de8/resourcegroups/sjt-syd-cor-arg-management/providers/microsoft.operationalinsights/workspaces/sjt-syd-cor-law-c310db5e",
+            "metadata": {
+                "description": "ResourceID for Log Analytics Workspace"
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "microsoft.aadiam/diagnosticSettings",
+            "apiVersion": "2017-04-01",
+            "name": "azureAdActivityLogsToLogAnalytics",
+            "properties": {
+                "workspaceId": "[parameters('lawResourceId')]",
+                "logs": [
+                    {
+                        "category": "AuditLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": "0",
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "SignInLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "NonInteractiveUserSignInLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "ServicePrincipalSignInLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "ManagedIdentitySignInLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "ProvisioningLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "ADFSSignInLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "RiskyUsers",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "UserRiskEvents",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    }
+
+                ],
+                "metrics": []
+            }
+        }
+    ],
+    "outputs": {}
+}

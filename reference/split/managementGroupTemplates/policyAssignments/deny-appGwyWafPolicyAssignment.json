@@ -1,0 +1,44 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "topLevelManagementGroupPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide the company prefix to the root management group containing the policy definitions."
+            }
+        },
+        "enforcementMode": {
+            "type": "string",
+            "allowedValues": [
+                "Default",
+                "DoNotEnforce"
+            ],
+            "defaultValue": "Default"
+        }
+    },
+    "variables": {
+        "policyDefinitions": {
+            "denyAppGwyWaf": "[concat('/providers/Microsoft.Management/managementGroups/', parameters('topLevelManagementGroupPrefix'), '/providers/Microsoft.Authorization/policyDefinitions/deny-appgwy-without-waf')]"
+        },
+        "policyAssignmentNames": {
+            "denySubnetWithoutNsg": "deny-appgwy-without-waf",
+            "description": "This policy enables you to restrict that Application Gateways is always deployed with WAF enabled",
+            "displayName": "Application Gateway should be deployed with WAF enabled"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('policyAssignmentNames').denySubnetWithoutNsg]",
+            "properties": {
+                "description": "[variables('policyAssignmentNames').description]",
+                "displayName": "[variables('policyAssignmentNames').displayName]",
+                "policyDefinitionId": "[variables('policyDefinitions').denyAppGwyWaf]",
+                "enforcementMode": "[parameters('enforcementMode')]"
+            }
+        }
+    ],
+    "outputs": {}
+}

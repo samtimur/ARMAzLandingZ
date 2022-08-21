@@ -1,0 +1,541 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "companyPrefix": {
+            "type": "string",
+            "maxLength": 5,
+            "metadata": {
+                "description": "Provide the company identifier prefix (max 5 characters)"
+            }
+        },
+        "locationPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the location identifier prefix (3 characters)"
+            }
+        },
+        "subscriptionPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Subscription identifier prefix (3 characters)"
+            }
+        },
+        "argPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the resource group identifier"
+            }
+        },
+        "vntPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the virtual network identifier prefix"
+            }
+        },
+        "staPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Azure Storage identifier prefix"
+            }
+        },
+        "udrPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Route Table identifier prefix"
+            }
+        },
+        "nsgPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Network Security Group identifier prefix"
+            }
+        },
+        "rsvPrefix": {
+            "type": "string",
+            "maxLength": 3,
+            "metadata": {
+                "description": "Provide the Recovery Services Vault prefix"
+            }
+        },
+        "subscriptionTag": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide the value for the environment tag"
+            }
+        },
+        "ownerTag": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide the value for the owner tag"
+            }
+        },
+        "costCenterTag": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide the value for the cost center tag"
+            }
+        },
+        "spokeSubscriptionId": {
+            "type": "string",
+            "defaultValue": "",
+            "maxLength": 36,
+            "metadata": {
+                "description": "Provide the subscription id for a Landing Zone Subscription"
+            }
+        },
+        "enableStorage": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "metadata": {
+                "description": "If 'Yes' is selected then an Azure Storage Account will be deployed."
+            }
+        },
+        "enableRsv": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "metadata": {
+                "description": "If 'Yes' is selected then a Recovery Services Vault will be deployed."
+            }
+        },
+        "enableSpoke": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "connectivitySubscriptionId": {
+            "type": "string",
+            "defaultValue": "",
+            "maxLength": 36,
+            "metadata": {
+                "description": "Provide the subscription id of the Platform Connectivity Subscription ."
+            }
+        },
+        "hubVnetName": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "hubVnetRg": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "enableUdr": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "hubFwIp": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "enableWeb": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableApp": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableData": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "subnetMaskForWeb": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "subnetMaskForApp": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "subnetMaskForData": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[deployment().location]"
+        },
+        "addressPrefix": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Address prefix"
+            }
+        },
+        "enableBudget": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "startDate": {
+            "type": "string",
+            "defaultValue": "[concat(utcNow('MM'), '/01/', utcNow('yyyy'))]"
+        },
+        "amount": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "timeGrain": {
+            "type": "string",
+            "defaultValue": "Monthly",
+            "allowedValues": [
+                "Monthly",
+                "Quarterly",
+                "Annually"
+            ]
+        },
+        "contactEmails": {
+            "type": "array",
+            "defaultValue": []
+        }
+    },
+    "variables": {
+        "deploymentUris": {
+            "storage": "[uri(deployment().properties.templateLink.uri, 'armTemplates/spokeStorage.json')]",
+            "recoveryServicesVault": "[uri(deployment().properties.templateLink.uri, 'armTemplates/spokeRecoveryServicesVault.json')]",
+            "spokeConnectivity": "[uri(deployment().properties.templateLink.uri, 'armTemplates/spokeConnectivity.json')]",
+            "spokePeer": "[uri(deployment().properties.templateLink.uri, 'armTemplates/spokePeer.json')]",
+            "budget": "[uri(deployment().properties.templateLink.uri, 'armTemplates/budget.json')]"
+        },
+        "moveSubscription": "[concat(parameters('companyPrefix'), '-landingzones', '/', parameters('spokeSubscriptionId'))]",
+        "noSubscription": "[concat(parameters('companyPrefix'), '-landingzones', '/', 'na')]",
+        "deploymentNames": {
+            "storage": "[take(concat('storage', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "recoveryServicesVault": "[take(concat('rsv', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "spokeConnectivity": "[take(concat('spokeConnectivity', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "spokePeer": "[take(concat('spokePeer', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]",
+            "budget": "[take(concat('budget', '-', deployment().location, '-', guid(parameters('companyPrefix'))), 64)]"
+        },
+        "apiVersions": {
+            "deployments": "2020-06-01",
+            "subscriptions": "2020-05-01"
+        }
+    },
+    "resources": [
+        {
+            "comments": "Move Azure subscription to the appropriate Management Group (Landing Zone)",
+            "condition": "[not(empty(parameters('spokeSubscriptionId')))]",
+            "type": "Microsoft.Management/managementGroups/subscriptions",
+            "apiVersion": "[variables('apiVersions').subscriptions]",
+            "name": "[if(not(empty(parameters('spokeSubscriptionId'))), variables('moveSubscription'), variables('noSubscription'))]",
+            "dependsOn": [
+            ],
+            "properties": {}
+        },
+        {
+            "comments": "Linked template deployment of Recovery Services Vault for the Landing Zone Subscription",
+            "condition": "[and(not(empty(parameters('spokeSubscriptionId'))),equals(parameters('enableRsv'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "subscriptionId": "[parameters('spokeSubscriptionId')]",
+            "name": "[variables('deploymentNames').recoveryServicesVault]",
+            "dependsOn": [
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').recoveryServicesVault]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "subscriptionPrefix": {
+                        "value": "[parameters('subscriptionPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "rsvPrefix": {
+                        "value": "[parameters('rsvPrefix')]"
+                    },
+                    "enableRsv": {
+                        "value": "[parameters('enableRsv')]"
+                    },
+                    "subscriptionTag": {
+                        "value": "[parameters('subscriptionTag')]"
+                    },
+                    "ownerTag": {
+                        "value": "[parameters('ownerTag')]"
+                    },
+                    "costCenterTag": {
+                        "value": "[parameters('costCenterTag')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template deployment of Azure Storage Account for the Landing Zone Subscription",
+            "condition": "[and(not(empty(parameters('spokeSubscriptionId'))),equals(parameters('enableStorage'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "subscriptionId": "[parameters('spokeSubscriptionId')]",
+            "name": "[variables('deploymentNames').storage]",
+            "dependsOn": [
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').storage]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "subscriptionPrefix": {
+                        "value": "[parameters('subscriptionPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "staPrefix": {
+                        "value": "[parameters('staPrefix')]"
+                    },
+                    "enableStorage": {
+                        "value": "[parameters('enableStorage')]"
+                    },
+                    "subscriptionTag": {
+                        "value": "[parameters('subscriptionTag')]"
+                    },
+                    "ownerTag": {
+                        "value": "[parameters('ownerTag')]"
+                    },
+                    "costCenterTag": {
+                        "value": "[parameters('costCenterTag')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template deployment of virtual network for the Landing Zone Subscription",
+            "condition": "[and(not(empty(parameters('spokeSubscriptionId'))),equals(parameters('enableSpoke'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "scope": "[concat('Microsoft.Management/managementGroups/', parameters('companyPrefix'), '-landingzones')]",
+            "name": "[variables('deploymentNames').spokeConnectivity]",
+            "dependsOn": [
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').spokeConnectivity]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "subscriptionPrefix": {
+                        "value": "[parameters('subscriptionPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "vntPrefix": {
+                        "value": "[parameters('vntPrefix')]"
+                    },
+                    "udrPrefix": {
+                        "value": "[parameters('udrPrefix')]"
+                    },
+                    "nsgPrefix": {
+                        "value": "[parameters('nsgPrefix')]"
+                    },
+                    "subscriptionTag": {
+                        "value": "[parameters('subscriptionTag')]"
+                    },
+                    "ownerTag": {
+                        "value": "[parameters('ownerTag')]"
+                    },
+                    "costCenterTag": {
+                        "value": "[parameters('costCenterTag')]"
+                    },
+                    "enableSpoke": {
+                        "value": "[parameters('enableSpoke')]"
+                    },
+                    "enableUdr": {
+                        "value": "[parameters('enableUdr')]"
+                    },
+                    "hubFwIp": {
+                        "value": "[parameters('hubFwIp')]"
+                    },
+                    "addressPrefix": {
+                        "value": "[parameters('addressPrefix')]"
+                    },
+                    "enableWeb": {
+                        "value": "[parameters('enableWeb')]"
+                    },
+                    "enableApp": {
+                        "value": "[parameters('enableApp')]"
+                    },
+                    "enableData": {
+                        "value": "[parameters('enableData')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "spokeSubscriptionId": {
+                        "value": "[parameters('spokeSubscriptionId')]"
+                    },
+                    "subnetMaskForWeb": {
+                        "value": "[parameters('subnetMaskForWeb')]"
+                    },
+                    "subnetMaskForApp": {
+                        "value": "[parameters('subnetMaskForApp')]"
+                    },
+                    "subnetMaskForData": {
+                        "value": "[parameters('subnetMaskForData')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template deployment of Virtual Network Peer between the Spoke and Connectivity Hub",
+            "condition": "[and(not(empty(parameters('spokeSubscriptionId'))),equals(parameters('enableSpoke'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "subscriptionId": "[parameters('spokeSubscriptionId')]",
+            "name": "[variables('deploymentNames').spokePeer]",
+            "dependsOn": [
+                "[variables('deploymentNames').spokeConnectivity]"
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').spokePeer]"
+                },
+                "parameters": {
+                    "companyPrefix": {
+                        "value": "[parameters('companyPrefix')]"
+                    },
+                    "locationPrefix": {
+                        "value": "[parameters('locationPrefix')]"
+                    },
+                    "subscriptionPrefix": {
+                        "value": "[parameters('subscriptionPrefix')]"
+                    },
+                    "argPrefix": {
+                        "value": "[parameters('argPrefix')]"
+                    },
+                    "vntPrefix": {
+                        "value": "[parameters('vntPrefix')]"
+                    },
+                    "enableSpoke": {
+                        "value": "[parameters('enableSpoke')]"
+                    },
+                    "addressPrefix": {
+                        "value": "[parameters('addressPrefix')]"
+                    },
+                    "connectivitySubscriptionId": {
+                        "value": "[parameters('connectivitySubscriptionId')]"
+                    },
+                    "spokeSubscriptionId": {
+                        "value": "[parameters('spokeSubscriptionId')]"
+                    },
+                    "hubVnetName": {
+                        "value": "[parameters('hubVnetName')]"
+                    },
+                    "hubVnetRg": {
+                        "value": "[parameters('hubVnetRg')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "Linked template deployment of Azure Budget in the Landing Zone Subscription",
+            "condition": "[and(not(empty(parameters('spokeSubscriptionId'))),equals(parameters('enableBudget'), 'Yes'))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "subscriptionId": "[parameters('spokeSubscriptionId')]",
+            "name": "[variables('deploymentNames').budget]",
+            "dependsOn": [
+            ],
+            "location": "[deployment().location]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('deploymentUris').budget]"
+                },
+                "parameters": {
+                    "enableBudget": {
+                        "value": "[parameters('enableBudget')]"
+                    },
+                    "amount": {
+                        "value": "[parameters('amount')]"
+                    },
+                    "timeGrain": {
+                        "value": "[parameters('timeGrain')]"
+                    },
+                    "contactEmails": {
+                        "value": "[parameters('contactEmails')]"
+                    },
+                    "startDate": {
+                        "value": "[parameters('startDate')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "deployment": {
+            "type": "string",
+            "value": "[concat(deployment().name, ' has successfully deployed.')]"
+        }
+    }
+}

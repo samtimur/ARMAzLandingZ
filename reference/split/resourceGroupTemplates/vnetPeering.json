@@ -1,0 +1,123 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "enableSpoke": {
+      "type": "string",
+      "defaultValue": "Yes",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ]
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "displayName": "location",
+        "description": "Location of the HUB"
+      },
+      "defaultValue": "[deployment().location]"
+    },
+    "networkRg": {
+      "type": "string"
+    },
+    "spokeVnet": {
+      "type": "string"
+    },
+    "vhubResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the resourceId for the hub."
+      }
+    },
+    "spokeResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the resourceId for the spoke."
+      }
+    }
+  },
+  "variables": {
+    "vNetPeerUseRemoteGateway": false,
+    "vhub": "[split(parameters('vhubResourceId'),'/')[8]]",
+    "spokeToHubPeerName": "[concat('FROM-', parameters('spokeVnet'), '-TO-', variables('vhub'))]",
+    "hubToSpokePeerName": "[concat('FROM-', variables('vhub'), '-TO-', parameters('spokeVnet'))]"
+  },
+  "resources": [
+    {
+      "comments": "Nested deployment for vNet peering (Spoke >> Hub)",
+      "condition": "[equals(parameters('enableSpoke'), 'Yes')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "[take(concat('spokeToHub', '-', guid(deployment().name)), 64)]",
+      "resourceGroup": "[parameters('networkRg')]",
+      "dependsOn": [],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "variables": {},
+          "resources": [
+            {
+              "comments": "Deploy peering (Spoke >> Hub)",
+              "condition": "[equals(parameters('enableSpoke'), 'Yes')]",
+              "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+              "apiVersion": "2020-07-01",
+              "name": "[concat(parameters('spokeVnet'), '/',variables('spokeToHubPeerName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": "[variables('vNetPeerUseRemoteGateway')]",
+                "remoteVirtualNetwork": {
+                  "id": "[parameters('vhubResourceId')]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "comments": "Nested deployment for vNet peering (Hub >> Spoke)",
+      "condition": "[equals(parameters('enableSpoke'), 'Yes')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "[take(concat('hubToSpoke', '-', guid(deployment().name)), 64)]",
+      "subscriptionId": "[split(parameters('vhubResourceId'),'/')[2]]",
+      "resourceGroup": "[split(parameters('vhubResourceId'),'/')[4]]",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "variables": {},
+          "resources": [
+            {
+              "comments": "Deploy vNet peering (Hub >> Spoke)",
+              "condition": "[equals(parameters('enableSpoke'), 'Yes')]",
+              "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+              "apiVersion": "2020-07-01",
+              "name": "[concat(variables('vhub'), '/',variables('hubToSpokePeerName'))]",
+              "location": "[deployment().location]",
+              "properties": {
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteVirtualNetwork": {
+                  "id": "[parameters('spokeResourceId')]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

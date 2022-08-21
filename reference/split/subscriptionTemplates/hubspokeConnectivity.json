@@ -1,0 +1,876 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "addressPrefix": {
+            "type": "string",
+            "metadata": {
+                "displayName": "addressPrefix",
+                "description": "Address prefix of the HUB"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "displayName": "location",
+                "description": "Location of the HUB"
+            },
+            "defaultValue": "[deployment().location]"
+        },
+        "enableHub": {
+            "type": "string",
+            "allowedValues": [
+                "vhub",
+                "No"
+            ],
+            "defaultValue": "No",
+            "metadata": {
+                "description": "Select whether the virtual network hub should be deployed or not."
+            }
+        },
+        "enableAzFw": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "No",
+            "metadata": {
+                "description": "Select whether the Azure Firewall should be deployed or not."
+            }
+        },
+        "enableAzFwDnsProxy": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "No",
+            "metadata": {
+                "description": "Select whether the Azure Firewall should be used as DNS Proxy or not."
+            }
+        },
+        "enableVpnGw": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "No",
+            "metadata": {
+                "description": "Select whether the VPN Gateway should be deployed or not."
+            }
+        },
+        "enableErGw": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "No",
+            "metadata": {
+                "description": "Select whether the ExpressRoute Gateway should be deployed or not."
+            }
+        },
+        "platformSubscriptionId": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide the subscription id for the dedicated connectivity subscription."
+            }
+        },
+        "subnetMaskForazfw": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide subnet for Azure Firewall."
+            }
+        },
+        "subnetMaskForGw": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide subnet for VPN/ER."
+            }
+        },
+        "firewallSku": {
+            "type": "string",
+            "allowedValues": [
+                "Standard",
+                "Premium"
+            ],
+            "defaultValue": "Standard"
+        },
+        "firewallZones": {
+            "type": "array",
+            "defaultValue": []
+        },
+        "gwRegionalOrAz": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "gwAzSku": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "gwRegionalSku": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "erRegionalOrAz": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "erAzSku": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "erRegionalSku": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "enableAppGw": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "No",
+            "metadata": {
+                "description": "Select whether the App Gateway should be deployed or not."
+            }
+        },
+        "enableAzBastion": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "No",
+            "metadata": {
+                "description": "Select whether the Azure Bastion should be deployed or not."
+            }
+        },
+        "enableDdoS": {
+            "type": "string",
+            "defaultValue": "No",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "metadata": {
+                "description": "Select whether the DDoS Standard protection plan should be enabled or not."
+            }
+        },
+        "subnetMaskForAzBastion": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide subnet for Azure Bastion"
+            }
+        },
+        "subnetMaskForAppGw": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Provide subnet for App Gateway"
+            }
+        },
+        "networkRg": {
+            "type": "string"
+        },
+        "networkWatcherRg": {
+            "type": "string"
+        },
+        "networkWatcher": {
+            "type": "string"
+        },
+        "vhub": {
+            "type": "string"
+        },
+        "vpnGwy": {
+            "type": "string"
+        },
+        "vpnGwyIp": {
+            "type": "string"
+        },
+        "erGwy": {
+            "type": "string"
+        },
+        "erGwyIp": {
+            "type": "string"
+        },
+        "azfw": {
+            "type": "string"
+        },
+        "bastion": {
+            "type": "string"
+        },
+        "bastionIp": {
+            "type": "string"
+        },
+        "azfwPolicy": {
+            "type": "string"
+        },
+        "azfwIp": {
+            "type": "string"
+        },
+        "bastionNsg": {
+            "type": "string"
+        },
+        "appGwyNsg": {
+            "type": "string"
+        },
+        "vhubResourceId": {
+            "type": "string"
+        },
+        "vpnGwyIpResourceId": {
+            "type": "string"
+        },
+        "erGwyIpResourceId": {
+            "type": "string"
+        },
+        "azfwIpResourceId": {
+            "type": "string"
+        },
+        "azfwPolicyResourceId": {
+            "type": "string"
+        },
+        "bastionIpResourceId": {
+            "type": "string"
+        },
+        "bastionNsgResourceId": {
+            "type": "string"
+        },
+        "appGwyNsgResourceId": {
+            "type": "string"
+        },
+        "ddosPlanResourceId": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "appGwySubnet": "AppGateway",
+        "vpnGwySubnetId": "[concat(parameters('vhubResourceId'), '/subnets/GatewaySubnet')]",
+        "erGwySubnetId": "[concat(parameters('vhubResourceId'), '/subnets/GatewaySubnet')]",
+        "azfwSubnetId": "[concat(parameters('vhubResourceId'), '/subnets/AzureFirewallSubnet')]",
+        "azBastionSubnetId": "[concat(parameters('vhubResourceId'), '/subnets/AzureBastionSubnet')]",
+        "azfwPolicyResourceId": {
+            "id": "[parameters('azfwPolicyResourceId')]"
+        },
+        "ddosProtectionPlanId": {
+            "id": "[parameters('ddosPlanResourceId')]"
+        },
+        "azfwDnsSettings": {
+            "enableProxy": true
+        },
+        "gwSubnet": [
+            {
+                "name": "GatewaySubnet",
+                "properties": {
+                    "addressPrefix": "[parameters('subnetMaskForGw')]"
+                }
+            }
+        ],
+        "fwSubnet": [
+            {
+                "name": "AzureFirewallSubnet",
+                "properties": {
+                    "addressPrefix": "[parameters('subnetMaskForazfw')]"
+                }
+            }
+        ]
+    },
+    "resources": [
+        {
+            "comments": "Conditional deployment for Azure Hub Network Resources in the Platform Connectivity subscription",
+            "condition": "[and(equals(parameters('enableHub'), 'vhub'), not(empty(parameters('platformSubscriptionId'))))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "location": "[parameters('location')]",
+            "name": "[take(concat('hubSpokeConnectivity-', guid(deployment().name)), 64)]",
+            "subscriptionId": "[parameters('platformSubscriptionId')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "resources": [
+                        {
+                            "comments": "Nested deployment for Network Watcher",
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "2019-10-01",
+                            "name": "[take(concat('networkWatcher-', guid(deployment().name)), 64)]",
+                            "resourceGroup": "[parameters('networkWatcherRg')]",
+                            "dependsOn": [
+                            ],
+                            "properties": {
+                                "mode": "Incremental",
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "parameters": {},
+                                    "resources": [
+                                        {
+                                            "comments": "Deploy Resource Group Lock",
+                                            "type": "Microsoft.Authorization/locks",
+                                            "apiVersion": "2016-09-01",
+                                            "name": "ResourceGroup-DontDelete",
+                                            "properties": {
+                                                "level": "CanNotDelete",
+                                                "notes": "Prevent deletion of the resourceGroup"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Deploy Network Watcher",
+                                            "type": "Microsoft.Network/networkWatchers",
+                                            "apiVersion": "2020-05-01",
+                                            "name": "[parameters('networkWatcher')]",
+                                            "location": "[parameters('location')]",
+                                            "tags": {},
+                                            "properties": {},
+                                            "resources": []
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "comments": "Nested deployment for Azure Hub Network Resources",
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "2019-10-01",
+                            "name": "[take(concat('hubSpokeConnectivity-', guid(deployment().name)), 64)]",
+                            "resourceGroup": "[parameters('networkRg')]",
+                            "dependsOn": [
+                            ],
+                            "properties": {
+                                "mode": "Incremental",
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "parameters": {},
+                                    "resources": [
+                                        {
+                                            "comments": "Deploy Resource Group Lock",
+                                            "type": "Microsoft.Authorization/locks",
+                                            "apiVersion": "2016-09-01",
+                                            "name": "ResourceGroup-DontDelete",
+                                            "properties": {
+                                                "level": "CanNotDelete",
+                                                "notes": "Prevent deletion of the resourceGroup"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Deploy Azure Virtual Network Resources",
+                                            "type": "Microsoft.Network/virtualNetworks",
+                                            "apiVersion": "2020-04-01",
+                                            "name": "[parameters('vhub')]",
+                                            "location": "[parameters('location')]",
+                                            "properties": {
+                                                "addressSpace": {
+                                                    "addressPrefixes": [
+                                                        "[parameters('addressPrefix')]"
+                                                    ]
+                                                },
+                                                "enableDdosProtection": "[if(equals(parameters('enableDdoS'), 'Yes'), 'true', 'false')]",
+                                                "ddosProtectionPlan": "[if(equals(parameters('enableDdoS'), 'Yes'), variables('ddosProtectionPlanId'), json('null'))]",
+                                                "subnets": "[
+                                                             union(
+                                                                  if(
+                                                                      not(
+                                                                          empty(parameters('subnetMaskForGw'))), variables('gwSubnet'), json('[]')), 
+                                                                          if(
+                                                                              not(
+                                                                                  empty(parameters('subnetMaskForazfw'))), variables('fwSubnet'), json('[]')))]"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of Azure Bastion Subnet",
+                                            "condition": "[and(equals(parameters('enableAzBastion'), 'Yes'), not(empty(parameters('subnetMaskForAzBastion'))))]",
+                                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                                            "apiVersion": "2020-04-01",
+                                            "name": "[concat(parameters('vhub'), '/', 'AzureBastionSubnet')]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('bastionNsg'))]",
+                                                "[concat('Microsoft.Network/virtualNetworks/', parameters('vhub'))]",
+                                                "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('vhub'), variables('appGwySubnet'))]"
+                                            ],
+                                            "properties": {
+                                                "addressPrefix": "[parameters('subnetMaskForAzBastion')]",
+                                                "networkSecurityGroup": {
+                                                    "id": "[parameters('bastionNsgResourceId')]"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of the Azure App Gateway Subnet",
+                                            "condition": "[and(equals(parameters('enableAppGw'), 'Yes'), not(empty(parameters('subnetMaskForAppGw'))))]",
+                                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                                            "apiVersion": "2020-04-01",
+                                            "name": "[concat(parameters('vhub'), '/', variables('appGwySubnet'))]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/virtualNetworks/', parameters('vhub'))]",
+                                                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('appGwyNsg'))]"
+                                            ],
+                                            "properties": {
+                                                "addressPrefix": "[parameters('subnetMaskForAppGw')]",
+                                                "networkSecurityGroup": {
+                                                    "id": "[parameters('appGwyNsgResourceId')]"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of the Azure Bastion NSG",
+                                            "condition": "[and(equals(parameters('enableAzBastion'), 'Yes'), not(empty(parameters('subnetMaskForAzBastion'))))]",
+                                            "type": "Microsoft.Network/networkSecurityGroups",
+                                            "apiVersion": "2020-04-01",
+                                            "name": "[parameters('bastionNsg')]",
+                                            "location": "[parameters('location')]",
+                                            "tags": {
+                                                "appliedSubnet": "[concat(parameters('vhub'), '/AzureBastionSubnet')]"
+                                            },
+                                            "properties": {
+                                                "securityRules": [
+                                                    {
+                                                        "name": "INBOUND-FROM-Internet-TO-any-PORT-443-PROT-tcp-ALLOW",
+                                                        "properties": {
+                                                            "protocol": "tcp",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRange": "443",
+                                                            "sourceAddressPrefix": "Internet",
+                                                            "destinationAddressPrefix": "*",
+                                                            "access": "Allow",
+                                                            "priority": 100,
+                                                            "direction": "Inbound",
+                                                            "description": "This is required for inbound HTTPS access from the internet."
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "INBOUND-FROM-gatewayManager-TO-any-PORT-443-PROT-tcp-ALLOW",
+                                                        "properties": {
+                                                            "protocol": "tcp",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRange": "443",
+                                                            "sourceAddressPrefix": "GatewayManager",
+                                                            "destinationAddressPrefix": "*",
+                                                            "access": "Allow",
+                                                            "priority": 110,
+                                                            "direction": "Inbound",
+                                                            "description": "This is required for inbound HTTPS access from the Gateway Manager."
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "INBOUND-FROM-azureLoadBalancer-TO-any-PORT-443-PROT-tcp-ALLOW",
+                                                        "properties": {
+                                                            "protocol": "tcp",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRange": "443",
+                                                            "sourceAddressPrefix": "AzureLoadBalancer",
+                                                            "destinationAddressPrefix": "*",
+                                                            "access": "Allow",
+                                                            "priority": 120,
+                                                            "direction": "Inbound",
+                                                            "description": "This is required for inbound HTTPS access from the Azure Load Balancer."
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "INBOUND-FROM-virtualNetwork-TO-virtualNetwork-PORT-8080/5701-PROT-tcp-ALLOW",
+                                                        "properties": {
+                                                            "protocol": "tcp",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRanges": [
+                                                                "8080",
+                                                                "5701"
+                                                            ],
+                                                            "sourceAddressPrefix": "VirtualNetwork",
+                                                            "destinationAddressPrefix": "VirtualNetwork",
+                                                            "access": "Allow",
+                                                            "priority": 150,
+                                                            "direction": "Inbound",
+                                                            "description": "This is required for inbound HTTPS access from the Azure Load Balancer."
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "INBOUND-FROM-any-TO-any-PORT-any-PROT-any-DENY",
+                                                        "properties": {
+                                                            "protocol": "*",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRange": "*",
+                                                            "sourceAddressPrefix": "*",
+                                                            "destinationAddressPrefix": "*",
+                                                            "access": "Deny",
+                                                            "priority": 4000,
+                                                            "direction": "Inbound",
+                                                            "description": "Inbound default Deny all rule"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "OUTBOUND-FROM-any-TO-virtualNetwork-PORT-22/3389-PROT-tcp-ALLOW",
+                                                        "properties": {
+                                                            "protocol": "tcp",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRanges": [
+                                                                "22",
+                                                                "3389"
+                                                            ],
+                                                            "sourceAddressPrefix": "*",
+                                                            "destinationAddressPrefix": "VirtualNetwork",
+                                                            "access": "Allow",
+                                                            "priority": 100,
+                                                            "direction": "Outbound",
+                                                            "description": "Outbound from the Bastion Subnet to virtual networks on port 3389 and 22"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "OUTBOUND-FROM-any-TO-azureCloud-PORT-443-PROT-tcp-ALLOW",
+                                                        "properties": {
+                                                            "protocol": "tcp",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRange": "443",
+                                                            "sourceAddressPrefix": "*",
+                                                            "destinationAddressPrefix": "AzureCloud",
+                                                            "access": "Allow",
+                                                            "priority": 110,
+                                                            "direction": "Outbound",
+                                                            "description": "Outbound from the Bastion Subnet to the Azure Cloud on port 443"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "OUTBOUND-FROM-virtualNetwork-TO-virtualNetwork-PORT-8080/5701-PROT-any-ALLOW",
+                                                        "properties": {
+                                                            "protocol": "*",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRanges": [
+                                                                "8080",
+                                                                "5701"
+                                                            ],
+                                                            "sourceAddressPrefix": "VirtualNetwork",
+                                                            "destinationAddressPrefix": "VirtualNetwork",
+                                                            "access": "Allow",
+                                                            "priority": 120,
+                                                            "direction": "Outbound",
+                                                            "description": "Outbound from the Bastion Subnet to the Azure Data plane on port 8080, 5701"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "OUTBOUND-FROM-any-TO-any-PORT-any-PROT-any-DENY",
+                                                        "properties": {
+                                                            "protocol": "*",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRange": "*",
+                                                            "sourceAddressPrefix": "*",
+                                                            "destinationAddressPrefix": "*",
+                                                            "access": "Deny",
+                                                            "priority": 4000,
+                                                            "direction": "Outbound",
+                                                            "description": "Outbound default Deny all rule"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of the Azure App Gateway NSG",
+                                            "condition": "[and(equals(parameters('enableAppGw'), 'Yes'), not(empty(parameters('subnetMaskForAppGw'))))]",
+                                            "type": "Microsoft.Network/networkSecurityGroups",
+                                            "apiVersion": "2020-04-01",
+                                            "name": "[parameters('appGwyNsg')]",
+                                            "location": "[parameters('location')]",
+                                            "tags": {
+                                                "appliedSubnet": "[concat(parameters('vhub'), '/', variables('appGwySubnet'))]"
+                                            },
+                                            "properties": {
+                                                "securityRules": [
+                                                    {
+                                                        "name": "INBOUND-FROM-gatewayManager-TO-any-PORT-65200-65535-PROT-tcp-ALLOW",
+                                                        "properties": {
+                                                            "protocol": "tcp",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRange": "65200-65535",
+                                                            "sourceAddressPrefix": "GatewayManager",
+                                                            "destinationAddressPrefix": "*",
+                                                            "access": "Allow",
+                                                            "priority": 100,
+                                                            "direction": "Inbound",
+                                                            "description": "This is required for Azure infrastructure communication. These ports are protected & locked down by Azure certificates."
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "[concat('INBOUND-FROM-internet-TO-', parameters('subnetMaskForAppGw'), '-PORT-443-PROT-tcp-ALLOW')]",
+                                                        "properties": {
+                                                            "protocol": "tcp",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRange": "443",
+                                                            "sourceAddressPrefix": "Internet",
+                                                            "destinationAddressPrefix": "[parameters('subnetMaskForAppGw')]",
+                                                            "access": "Allow",
+                                                            "priority": 110,
+                                                            "direction": "Inbound",
+                                                            "description": "This is required for inbound HTTPS access from the internet."
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "INBOUND-FROM-any-TO-any-PORT-any-PROT-any-DENY",
+                                                        "properties": {
+                                                            "protocol": "*",
+                                                            "sourcePortRange": "*",
+                                                            "destinationPortRange": "*",
+                                                            "sourceAddressPrefix": "*",
+                                                            "destinationAddressPrefix": "*",
+                                                            "access": "Deny",
+                                                            "priority": 4000,
+                                                            "direction": "Inbound",
+                                                            "description": "Inbound default Deny all rule"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of the Public IP for Azure Bastion",
+                                            "condition": "[and(equals(parameters('enableAzBastion'), 'Yes'), not(empty(parameters('subnetMaskForAzBastion'))))]",
+                                            "type": "Microsoft.Network/publicIpAddresses",
+                                            "apiVersion": "2020-05-01",
+                                            "name": "[parameters('bastionIp')]",
+                                            "location": "[parameters('location')]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/virtualNetworks/', parameters('vhub'), '/subnets/AzureBastionSubnet')]"
+                                            ],
+                                            "sku": {
+                                                "name": "Standard"
+                                            },
+                                            "properties": {
+                                                "publicIPAllocationMethod": "Static",
+                                                "publicIPAddressVersion": "IPv4"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of Azure Bastion",
+                                            "condition": "[and(equals(parameters('enableAzBastion'), 'Yes'), not(empty(parameters('subnetMaskForAzBastion'))))]",
+                                            "apiVersion": "2019-04-01",
+                                            "type": "Microsoft.Network/bastionHosts",
+                                            "name": "[parameters('bastion')]",
+                                            "location": "[parameters('location')]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/publicIpAddresses/', parameters('bastionIp'))]",
+                                                "[concat('Microsoft.Network/virtualNetworks/', parameters('vhub'), '/subnets/AzureBastionSubnet')]"
+                                            ],
+                                            "properties": {
+                                                "ipConfigurations": [
+                                                    {
+                                                        "name": "[parameters('bastionIp')]",
+                                                        "properties": {
+                                                            "subnet": {
+                                                                "id": "[variables('azBastionSubnetId')]"
+                                                            },
+                                                            "publicIPAddress": {
+                                                                "id": "[parameters('bastionIpResourceId')]"
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of the Public IP for VPN Gateway",
+                                            "condition": "[and(equals(parameters('enableVpnGw'), 'Yes'), not(empty(parameters('subnetMaskForGw'))))]",
+                                            "apiVersion": "2020-05-01",
+                                            "type": "Microsoft.Network/publicIpAddresses",
+                                            "location": "[parameters('location')]",
+                                            "name": "[parameters('vpnGwyIp')]",
+                                            "sku": {
+                                                "name": "[if(equals(parameters('gwRegionalOrAz'), 'Zone'), 'Standard', 'Basic')]"
+                                            },
+                                            "properties": {
+                                                "publicIPAllocationMethod": "[if(equals(parameters('gwRegionalOrAz'), 'Zone'), 'Static', 'Dynamic')]"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of the VPN Gateway",
+                                            "condition": "[and(equals(parameters('enableVpnGw'), 'Yes'), not(empty(parameters('subnetMaskForGw'))))]",
+                                            "apiVersion": "2020-05-01",
+                                            "name": "[parameters('vpnGwy')]",
+                                            "type": "Microsoft.Network/virtualNetworkGateways",
+                                            "location": "[parameters('location')]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/publicIPAddresses/', parameters('vpnGwyIp'))]",
+                                                "[concat('Microsoft.Network/virtualNetworks/', parameters('vhub'))]"
+                                            ],
+                                            "properties": {
+                                                "gatewayType": "Vpn",
+                                                "vpnGatewayGeneration": "Generation2",
+                                                "vpnType": "RouteBased",
+                                                "ipConfigurations": [
+                                                    {
+                                                        "name": "default",
+                                                        "properties": {
+                                                            "privateIPAllocationMethod": "Dynamic",
+                                                            "subnet": {
+                                                                "id": "[variables('vpnGwySubnetId')]"
+                                                            },
+                                                            "publicIpAddress": {
+                                                                "id": "[parameters('vpnGwyIpResourceId')]"
+                                                            }
+                                                        }
+                                                    }
+                                                ],
+                                                "sku": {
+                                                    "name": "[if(
+                                                                 and(
+                                                                     or(
+                                                                         empty(parameters('gwRegionalSku')), 
+                                                                         empty(parameters('gwAzSku'))), 
+                                                                         not(
+                                                                             empty(parameters('gwRegionalSku')))), 
+                                                                                parameters('gwRegionalSku'), 
+                                                                                parameters('gwAzSku'))]",
+                                                    "tier": "[if(
+                                                                and(
+                                                                    or(
+                                                                        empty(parameters('gwRegionalSku')), 
+                                                                        empty(parameters('gwAzSku'))), 
+                                                                        not(
+                                                                            empty(parameters('gwRegionalSku')))), 
+                                                                                parameters('gwRegionalSku'), 
+                                                                                parameters('gwAzSku'))]"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of the Public IP for ER Gateway",
+                                            "condition": "[and(equals(parameters('enableErGw'), 'Yes'), not(empty(parameters('subnetMaskForGw'))))]",
+                                            "apiVersion": "2020-05-01",
+                                            "type": "Microsoft.Network/publicIpAddresses",
+                                            "location": "[parameters('location')]",
+                                            "name": "[parameters('erGwyIp')]",
+                                            "sku": {
+                                                "name": "[if(equals(parameters('erRegionalOrAz'), 'Zone'), 'Standard', 'Basic')]"
+                                            },
+                                            "properties": {
+                                                "publicIPAllocationMethod": "[if(equals(parameters('erRegionalOrAz'), 'Zone'), 'Static', 'Dynamic')]"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of the ER Gateway",
+                                            "condition": "[and(equals(parameters('enableErGw'), 'Yes'), not(empty(parameters('subnetMaskForGw'))))]",
+                                            "apiVersion": "2020-05-01",
+                                            "name": "[parameters('erGwy')]",
+                                            "type": "Microsoft.Network/virtualNetworkGateways",
+                                            "location": "[parameters('location')]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/publicIPAddresses/', parameters('erGwyIp'))]",
+                                                "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('vpnGwy'))]",
+                                                "[concat('Microsoft.Network/virtualNetworks/', parameters('vhub'))]"
+                                            ],
+                                            "properties": {
+                                                "gatewayType": "ExpressRoute",
+                                                "ipConfigurations": [
+                                                    {
+                                                        "name": "default",
+                                                        "properties": {
+                                                            "privateIPAllocationMethod": "Dynamic",
+                                                            "subnet": {
+                                                                "id": "[variables('erGwySubnetId')]"
+                                                            },
+                                                            "publicIpAddress": {
+                                                                "id": "[parameters('erGwyIpResourceId')]"
+                                                            }
+                                                        }
+                                                    }
+                                                ],
+                                                "sku": {
+                                                    "name": "[if(
+                                                                 and(
+                                                                     or(
+                                                                         empty(parameters('erRegionalSku')), 
+                                                                         empty(parameters('erAzSku'))), 
+                                                                         not(
+                                                                             empty(parameters('erRegionalSku')))), 
+                                                                                parameters('erRegionalSku'), 
+                                                                                parameters('erAzSku'))]",
+                                                    "tier": "[if(
+                                                                and(
+                                                                    or(
+                                                                        empty(parameters('erRegionalSku')), 
+                                                                        empty(parameters('erAzSku'))), 
+                                                                        not(
+                                                                            empty(parameters('erRegionalSku')))), 
+                                                                                parameters('erRegionalSku'), 
+                                                                                parameters('erAzSku'))]"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of the Public IP for Azure Firewall",
+                                            "condition": "[and(equals(parameters('enableAzFw'), 'Yes'), not(empty(parameters('subnetMaskForazfw'))))]",
+                                            "apiVersion": "2020-05-01",
+                                            "type": "Microsoft.Network/publicIpAddresses",
+                                            "name": "[parameters('azfwIp')]",
+                                            "location": "[parameters('location')]",
+                                            "sku": {
+                                                "name": "Standard"
+                                            },
+                                            "properties": {
+                                                "publicIPAllocationMethod": "Static"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of the Azure Firewall Policy",
+                                            "condition": "[and(equals(parameters('enableAzFw'), 'Yes'), not(empty(parameters('subnetMaskForazfw'))))]",
+                                            "type": "Microsoft.Network/firewallPolicies",
+                                            "apiVersion": "2020-11-01",
+                                            "name": "[parameters('azfwPolicy')]",
+                                            "location": "[parameters('location')]",
+                                            "properties": {
+                                                "sku": {
+                                                    "tier": "[parameters('firewallSku')]"
+                                                },
+                                                "dnsSettings": "[if(equals(parameters('enableAzFwDnsProxy'), 'Yes'), variables('azfwDnsSettings'), json('null'))]"
+                                            }
+                                        },
+                                        {
+                                            "comments": "Conditional deployment of the Azure Firewall",
+                                            "condition": "[and(equals(parameters('enableAzFw'), 'Yes'), not(empty(parameters('subnetMaskForazfw'))))]",
+                                            "apiVersion": "2020-05-01",
+                                            "type": "Microsoft.Network/azureFirewalls",
+                                            "name": "[parameters('azfw')]",
+                                            "location": "[parameters('location')]",
+                                            "zones": "[if(not(empty(parameters('firewallZones'))), parameters('firewallZones'), json('null'))]",
+                                            "dependsOn": [
+                                                "[concat('Microsoft.Network/firewallPolicies/', parameters('azfwPolicy'))]",
+                                                "[concat('Microsoft.Network/publicIpAddresses/', parameters('azfwIp'))]",
+                                                "[concat('Microsoft.Network/virtualNetworks/', parameters('vhub'))]"
+                                            ],
+                                            "properties": {
+                                                "sku": {
+                                                    "name": "AZFW_VNet",
+                                                    "tier": "[parameters('firewallSku')]"
+                                                },
+                                                "ipConfigurations": [
+                                                    {
+                                                        "name": "[parameters('azfwIp')]",
+                                                        "properties": {
+                                                            "subnet": {
+                                                                "id": "[variables('azfwSubnetId')]"
+                                                            },
+                                                            "publicIPAddress": {
+                                                                "id": "[parameters('azfwIpResourceId')]"
+                                                            }
+                                                        }
+                                                    }
+                                                ],
+                                                "firewallPolicy": "[variables('azfwPolicyResourceId')]"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

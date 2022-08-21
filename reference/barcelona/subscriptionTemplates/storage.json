@@ -1,0 +1,104 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "rgName": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide the resource group name where the Log Analytics workspace is deployed."
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide resource name for the Azure storage account"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[deployment().location]",
+            "metadata": {
+                "description": "Select Azure region for the Azure Storage account. Default, we will use same region as deployment."
+            }
+        }
+    },
+    "variables": {
+        "storage": {
+            "sku": "Standard_LRS",
+            "kind": "StorageV2",
+            "use": "diagnostics",
+            "httpsOnly": true,
+            "accessTier": "Hot",
+            "minimumTlsVersion": "TLS1_2",
+            "allowBlobPublicAccess": false
+        }
+    },
+    "resources": [
+        {
+            "comments": "Nested deployment for Azure Storage",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "[take(concat('storage-', guid(deployment().name)), 64)]",
+            "resourceGroup": "[parameters('rgName')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "resources": [
+                        {
+                            "comments": "Deploy Resource Group Lock",
+                            "type": "Microsoft.Authorization/locks",
+                            "apiVersion": "2016-09-01",
+                            "name": "ResourceGroup-DontDelete",
+                            "properties": {
+                                "level": "CanNotDelete",
+                                "notes": "Prevent deletion of the resourceGroup"
+                            }
+                        },
+                        {
+                            "comments": "Deploy Azure Storage Account",
+                            "type": "Microsoft.Storage/storageAccounts",
+                            "apiVersion": "2021-02-01",
+                            "name": "[parameters('storageAccountName')]",
+                            "location": "[parameters('location')]",
+                            "sku": {
+                                "name": "[variables('storage').sku]"
+                            },
+                            "identity": {
+                                "type": "systemAssigned"
+                            },
+                            "tags": {
+                                "storageSKU": "[variables('storage').sku]",
+                                "storageUse": "[variables('storage').use]"
+                            },
+                            "kind": "[variables('storage').kind]",
+                            "properties": {
+                                "encryption": {
+                                    "services": {
+                                        "blob": {
+                                            "enabled": true
+                                        }
+                                    },
+                                    "keySource": "Microsoft.Storage"
+                                },
+                                "accessTier": "[variables('storage').accessTier]",
+                                "supportsHttpsTrafficOnly": "[variables('storage').httpsOnly]",
+                                "minimumTlsVersion": "[variables('storage').minimumTlsVersion]",
+                                "networkAcls": {
+                                    "bypass": "AzureServices",
+                                    "virtualNetworkRules": [],
+                                    "ipRules": [
+                                    ],
+                                    "defaultAction": "Deny"
+                                },
+                                "allowBlobPublicAccess": "[variables('storage').allowBlobPublicAccess]"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,157 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "companyPrefix": {
+            "type": "string",
+            "maxLength": 5
+        },
+        "enableIdentity": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "denyRdpForIdentity": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "denySubnetWithoutNsgForIdentity": {
+            "type": "string",
+            "defaultValue": "No",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "denyPipForIdentity": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "enableVmBackupForIdentity": {
+            "type": "string",
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ]
+        },
+        "identitySubscriptionId": {
+            "type": "string",
+            "defaultValue": "",
+            "maxLength": 36
+        }
+    },
+    "variables": {
+        "scope": "[concat('/providers/Microsoft.Management/managementGroups/', parameters('companyPrefix'), '-identity')]",
+        "policyDefinitions": {
+            "denySubnetWithoutNsg": "[concat('/providers/Microsoft.Management/managementGroups/', parameters('companyPrefix'), '/providers/Microsoft.Authorization/policyDefinitions/deny-subnet-without-nsg')]",
+            "denyPip": "[concat('/providers/Microsoft.Management/managementGroups/', parameters('companyPrefix'), '/providers/Microsoft.Authorization/policyDefinitions/deny-public-ip')]",
+            "denyRdp": "[concat('/providers/Microsoft.Management/managementGroups/', parameters('companyPrefix'), '/providers/Microsoft.Authorization/policyDefinitions/deny-rdp-from-internet')]",
+            "deployVmBackup": "/providers/Microsoft.Authorization/policyDefinitions/98d0b9f8-fd90-49c9-88e2-d3baf3b0dd86"
+        },
+        "policyAssignmentNames": {
+            "denySubnetWithoutNsg": "deny-subnet-without-nsg",
+            "denyRdp": "deny-rdp-from-internet",
+            "denyPip": "deny-public-ip",
+            "deployVmBackup": "deploy-vm-backup"
+        },
+        "rbac": {
+            "owner": "8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+        },
+        "roleAssignmentNames": {
+            "deployVmBackup": "[guid(concat(parameters('companyPrefix'), 'identity', variables('policyAssignmentNames').deployVmBackup))]"
+        },
+        "apiVersions": {
+            "deployments": "2020-06-01",
+            "policyAssignments": "2020-03-01",
+            "roleAssignments": "2020-04-01-preview"
+        }
+        //"blankTemplateEscaped": "{\"$schema\":\"https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#\",\"contentVersion\":\"1.0.0.0\",\"parameters\":{},\"variables\":{},\"resources\":[],\"outputs\":{}}"
+    },
+    "resources": [
+        {
+            "comments": "Conditional Azure Policy Assignment to deny the creation of subnets without NSGs",
+            "condition": "[and(not(empty(parameters('identitySubscriptionId'))),equals(parameters('denySubnetWithoutNsgForIdentity'), 'Yes') ,equals(parameters('enableIdentity'), 'Yes'))]",
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "[variables('apiVersions').policyAssignments]",
+            "name": "[variables('policyAssignmentNames').denySubnetWithoutNsg]",
+            "properties": {
+                "description": "[variables('policyAssignmentNames').denySubnetWithoutNsg]",
+                "displayName": "[variables('policyAssignmentNames').denySubnetWithoutNsg]",
+                "policyDefinitionId": "[variables('policyDefinitions').denySubnetWithoutNsg]",
+                "scope": "[variables('scope')]"
+            }
+        },
+        {
+            "comments": "Conditional Azure Policy Assignment to deny RDP from the Internet",
+            "condition": "[and(not(empty(parameters('identitySubscriptionId'))),equals(parameters('denyRdpForIdentity'), 'Yes') ,equals(parameters('enableIdentity'), 'Yes'))]",
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "[variables('apiVersions').policyAssignments]",
+            "name": "[variables('policyAssignmentNames').denyRdp]",
+            "properties": {
+                "description": "[variables('policyAssignmentNames').denyRdp]",
+                "displayName": "[variables('policyAssignmentNames').denyRdp]",
+                "policyDefinitionId": "[variables('policyDefinitions').denyRdp]",
+                "scope": "[variables('scope')]"
+            }
+        },
+        {
+            "comments": "Conditional Azure Policy Assignment to deny the creation of Public IPs",
+            "condition": "[and(not(empty(parameters('identitySubscriptionId'))),equals(parameters('denyPipForIdentity'), 'Yes') ,equals(parameters('enableIdentity'), 'Yes'))]",
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "[variables('apiVersions').policyAssignments]",
+            "name": "[variables('policyAssignmentNames').denyPip]",
+            "properties": {
+                "description": "[variables('policyAssignmentNames').denyPip]",
+                "displayName": "[variables('policyAssignmentNames').denyPip]",
+                "policyDefinitionId": "[variables('policyDefinitions').denyPip]",
+                "scope": "[variables('scope')]"
+            }
+        },
+        {
+            "comments": "Conditional Azure Policy Assignment to enforce the Azure Backup agent for install",
+            "condition": "[and(not(empty(parameters('identitySubscriptionId'))),equals(parameters('enableVmBackupForIdentity'), 'Yes') ,equals(parameters('enableIdentity'), 'Yes'))]",
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "[variables('apiVersions').policyAssignments]",
+            "name": "[variables('policyAssignmentNames').deployVmBackup]",
+            "location": "[deployment().location]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "description": "[variables('policyAssignmentNames').deployVmBackup]",
+                "displayName": "[variables('policyAssignmentNames').deployVmBackup]",
+                "policyDefinitionId": "[variables('policyDefinitions').deployVmBackup]",
+                "scope": "[variables('scope')]",
+                "parameters": {}
+            }
+        },
+        {
+            "comments": "Conditional role assignment for the conditional Backup policy assignment for VM Backups",
+            "condition": "[and(not(empty(parameters('identitySubscriptionId'))),equals(parameters('enableVmBackupForIdentity'), 'Yes') ,equals(parameters('enableIdentity'), 'Yes'))]",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "[variables('apiVersions').roleAssignments]",
+            "name": "[variables('roleAssignmentNames').deployVmBackup]",
+            "dependsOn": [
+                "[variables('policyAssignmentNames').deployVmBackup]"
+            ],
+            "properties": {
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[concat('/providers/Microsoft.Authorization/roleDefinitions/', variables('rbac').owner)]",
+                "principalId": "[if(equals(parameters('enableVmBackupForIdentity'), 'Yes'), toLower(reference(concat('/providers/Microsoft.Authorization/policyAssignments/', variables('policyAssignmentNames').deployVmBackup), '2018-05-01', 'Full' ).identity.principalId), 'na')]"
+            }
+        }
+    ],
+    "outputs": {}
+}

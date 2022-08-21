@@ -1,0 +1,173 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "companyPrefix": {
+            "type": "string",
+            "maxLength": 5
+        },
+        "locationPrefix": {
+            "type": "string"
+        },
+        "platformPrefix": {
+            "type": "string"
+        },
+        "argPrefix": {
+            "type": "string"
+        },
+        "akvPrefix": {
+            "type": "string"
+        },
+        "principalId": {
+            "type": "array"
+        },
+        "principalSecret": {
+            "type": "secureString"
+        },
+        "gitHubUserNameOrOrg": {
+            "type": "string"
+        },
+        "paToken": {
+            "type": "secureString"
+        },
+        "subscriptionId": {
+            "type": "string"
+        },
+        "appId": {
+            "type": "string"
+        },
+        "repositoryName": {
+            "type": "string"
+        },
+        "subscriptionTag": {
+            "type": "string"
+        },
+        "ownerTag": {
+            "type": "string"
+        },
+        "costCenterTag": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "deploymentUris": {
+            "azOpsSetup": "[uri(deployment().properties.templateLink.uri, 'azOpsArm.json')]"
+        },
+        "deploymentNames": {
+            "spnRbac": "[guid(concat(parameters('companyPrefix'), variables('formattedPrincipalId')))]",
+            "azOpsSub": "[take(concat(parameters('companyPrefix'), '-', deployment().location, '-azOpsSub'), 64)]",
+            "azOpsRg": "[take(concat(parameters('companyPrefix'), '-', deployment().location, '-azOpsRg'), 64)]"
+        },
+        "namingPrefix": "[concat(parameters('companyPrefix'), '-', parameters('locationPrefix'), '-', parameters('platformPrefix'))]",
+        "resourceGroupName": "[toLower(concat(variables('namingPrefix'), '-', parameters('argPrefix'), '-azops'))]",
+        "formattedPrincipalId": "[replace(replace(replace(string(parameters('principalId')), '\"', ''), '[', ''), ']', '')]",
+        "roleDefinitionOwner": "8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+        "roleDefinitionId": "[concat('/providers/Microsoft.Authorization/roleDefinitions/', variables('roleDefinitionOwner'))]",
+        "apiVersions": {
+            "deployments": "2020-06-01",
+            "resourceGroups": "2020-06-01",
+            "roleAssignments": "2020-04-01-preview"
+        },
+        "tags": {
+            "environment": "[parameters('subscriptionTag')]",
+            "owner": "[parameters('ownerTag')]",
+            "costCenter": "[parameters('costCenterTag')]"
+        }
+    },
+    "resources": [
+        {
+            "comments": "Role assignment for the Service Principal",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "[variables('apiVersions').roleAssignments]",
+            "name": "[guid(concat(parameters('companyPrefix'), variables('formattedPrincipalId')))]",
+            "properties": {
+                "principalType": "ServicePrincipal",
+                "roleDefinitionId": "[variables('roleDefinitionId')]",
+                "principalId": "[variables('formattedPrincipalId')]"
+            }
+        },
+        {
+            "comments": "Linked template for the creation of AzOps gitHub Repo",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('apiVersions').deployments]",
+            "name": "[variables('deploymentNames').azOpsSub]",
+            "location": "[deployment().location]",
+            "subscriptionId": "[parameters('subscriptionId')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Authorization/roleAssignments',guid(concat(parameters('companyPrefix'), variables('formattedPrincipalId'))))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "resources": [
+                        {
+                            "comments": "Create Resource Group for AzOps",
+                            "type": "Microsoft.Resources/resourceGroups",
+                            "apiVersion": "[variables('apiVersions').resourceGroups]",
+                            "location": "[deployment().location]",
+                            "name": "[variables('resourceGroupName')]",
+                            "tags": {
+                                "environment": "[variables('tags').environment]",
+                                "owner": "[variables('tags').owner]",
+                                "costCenter": "[variables('tags').costCenter]"
+                            },
+                            "properties": {}
+                        },
+                        {
+                            "comments": "Nested deployment for AzOps",
+                            "type": "Microsoft.Resources/deployments",
+                            "apiVersion": "[variables('apiVersions').deployments]",
+                            "name": "[variables('deploymentNames').azOpsRg]",
+                            "resourceGroup": "[variables('resourceGroupName')]",
+                            "dependsOn": [
+                                "[concat('Microsoft.Resources/resourceGroups/', variables('resourceGroupName'))]"
+                            ],
+                            "properties": {
+                                "mode": "Incremental",
+                                "templateLink": {
+                                    "contentVersion": "1.0.0.0",
+                                    "uri": "[variables('deploymentUris').azOpsSetup]"
+                                },
+                                "parameters": {
+                                    "companyPrefix": {
+                                        "value": "[parameters('companyPrefix')]"
+                                    },
+                                    "locationPrefix": {
+                                        "value": "[parameters('locationPrefix')]"
+                                    },
+                                    "environmentPrefix": {
+                                        "value": "[parameters('platformPrefix')]"
+                                    },
+                                    "akvPrefix": {
+                                        "value": "[parameters('akvPrefix')]"
+                                    },
+                                    "paToken": {
+                                        "value": "[parameters('paToken')]"
+                                    },
+                                    "principalId": {
+                                        "value": "[parameters('principalId')]"
+                                    },
+                                    "principalSecret": {
+                                        "value": "[parameters('principalSecret')]"
+                                    },
+                                    "gitHubUserNameOrOrg": {
+                                        "value": "[parameters('gitHubUserNameOrOrg')]"
+                                    },
+                                    "appId": {
+                                        "value": "[parameters('appId')]"
+                                    },
+                                    "repositoryName": {
+                                        "value": "[parameters('repositoryName')]"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

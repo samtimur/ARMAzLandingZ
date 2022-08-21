@@ -1,0 +1,99 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "lawResourceId": {
+            "type": "string",
+            "metadata": {
+                "description": "ResourceID for Log Analytics Workspace"
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "microsoft.aadiam/diagnosticSettings",
+            "apiVersion": "2017-04-01",
+            "name": "azureAdActivityLogsToLogAnalytics",
+            "properties": {
+                "workspaceId": "[parameters('lawResourceId')]",
+                "logs": [
+                    {
+                        "category": "AuditLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": "0",
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "SignInLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "NonInteractiveUserSignInLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "ServicePrincipalSignInLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "ManagedIdentitySignInLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "ProvisioningLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "ADFSSignInLogs",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "RiskyUsers",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    },
+                    {
+                        "category": "UserRiskEvents",
+                        "enabled": true,
+                        "retentionPolicy": {
+                            "days": 0,
+                            "enabled": false
+                        }
+                    }
+
+                ],
+                "metrics": []
+            }
+        }
+    ],
+    "outputs": {}
+}

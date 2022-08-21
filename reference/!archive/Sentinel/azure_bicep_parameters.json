@@ -1,0 +1,42 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceName": {
+            "value": "sjj-syd-mgmt-law-a74317f"
+        },
+        "pricingTier": {
+            "value": "PerGB2018"
+        },
+        "dailyQuota": {
+            "value": 0
+        },
+        "dataRetention": {
+            "value": 90
+        },
+        "immediatePurgeDataOn30Days": {
+            "value": true
+        },
+        "securityCollectionTier": {
+            "value": "Recommended"
+        },
+        "enableDataConnectorsKind": {
+            "value": [
+                "Office365",
+                "AzureAdvancedThreatProtection",
+                "AzureActiveDirectory",
+                "MicrosoftDefenderAdvancedThreatProtection",
+                "AzureSecurityCenter",
+                "MicrosoftCloudAppSecurity",
+                "AzureActivity",
+                "SecurityEvents",
+                "WindowsFirewall",
+                "DNS",
+                "Syslog"
+            ]
+        },
+        "mcasDiscoveryLogs": {
+            "value": false
+        }
+    }
+}

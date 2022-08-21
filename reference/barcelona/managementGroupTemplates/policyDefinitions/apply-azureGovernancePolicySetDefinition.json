@@ -1,0 +1,235 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "topLevelManagementGroupPrefix": {
+            "type": "String",
+            "maxLength": 10,
+            "metadata": {
+                "description": "Provide a prefix (max 10 characters, unique at tenant-scope) for the Management Group hierarchy and other resources created as part of Enterprise-scale."
+            }
+        },
+        "tag1Name": {
+            "type": "string",
+            "defaultValue": "applicationName"
+        },
+        "tag1Value": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "tag2Name": {
+            "type": "string",
+            "defaultValue": "owner"
+        },
+        "tag2Value": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "tag3Name": {
+            "type": "string",
+            "defaultValue": "criticality"
+        },
+        "tag3Value": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "tag4Name": {
+            "type": "string",
+            "defaultValue": "contactEmail"
+        },
+        "tag4Value": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "tag5Name": {
+            "type": "string",
+            "defaultValue": "costCenter"
+        },
+        "tag5Value": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "tag6Name": {
+            "type": "string",
+            "defaultValue": "dataClassification"
+        },
+        "tag6Value": {
+            "type": "string",
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Authorization/policySetDefinitions",
+            "apiVersion": "2019-09-01",
+            "name": "configure-governance",
+            "properties": {
+                "metadata": {
+                    "version": "1.0.0",
+                    "category": "Governance"
+                },
+                "displayName": "Configure Azure Governance Baseline",
+                "description": "This Azure Governance initiative enforces resource group tagging, tag inheritence, allowed locations and other governance controls across the environment.",
+                "parameters": {},
+                "policyDefinitions": [
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/726aca4c-86e9-4b04-b0c5-073027359532",
+                        "policyDefinitionReferenceId": "Add-Tag-ApplicationName",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag1Name')]"
+                            },
+                            "tagValue": {
+                                "value": "[parameters('tag1Value')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cd3aa116-8754-49c9-a813-ad46512ece54",
+                        "policyDefinitionReferenceId": "Inherit-Tag-ApplicationName",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag1Name')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/726aca4c-86e9-4b04-b0c5-073027359532",
+                        "policyDefinitionReferenceId": "Add-Tag-Owner",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag2Name')]"
+                            },
+                            "tagValue": {
+                                "value": "[parameters('tag2Value')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cd3aa116-8754-49c9-a813-ad46512ece54",
+                        "policyDefinitionReferenceId": "Inherit-Tag-Owner",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag2Name')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/726aca4c-86e9-4b04-b0c5-073027359532",
+                        "policyDefinitionReferenceId": "Add-Tag-Criticality",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag3Name')]"
+                            },
+                            "tagValue": {
+                                "value": "[parameters('tag3Value')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cd3aa116-8754-49c9-a813-ad46512ece54",
+                        "policyDefinitionReferenceId": "Inherit-Tag-Criticality",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag3Name')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/726aca4c-86e9-4b04-b0c5-073027359532",
+                        "policyDefinitionReferenceId": "Add-Tag-ContactEmail",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag4Name')]"
+                            },
+                            "tagValue": {
+                                "value": "[parameters('tag4Value')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cd3aa116-8754-49c9-a813-ad46512ece54",
+                        "policyDefinitionReferenceId": "Inherit-Tag-ContactEmail",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag4Name')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/726aca4c-86e9-4b04-b0c5-073027359532",
+                        "policyDefinitionReferenceId": "Add-Tag-CostCenter",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag5Name')]"
+                            },
+                            "tagValue": {
+                                "value": "[parameters('tag5Value')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cd3aa116-8754-49c9-a813-ad46512ece54",
+                        "policyDefinitionReferenceId": "Inherit-Tag-CostCenter",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag5Name')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/726aca4c-86e9-4b04-b0c5-073027359532",
+                        "policyDefinitionReferenceId": "Add-Tag-DataClassification",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag6Name')]"
+                            },
+                            "tagValue": {
+                                "value": "[parameters('tag6Value')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cd3aa116-8754-49c9-a813-ad46512ece54",
+                        "policyDefinitionReferenceId": "Inherit-Tag-DataClassification",
+                        "parameters": {
+                            "tagName": {
+                                "value": "[parameters('tag6Name')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "[concat('/providers/Microsoft.Management/managementGroups/', parameters('topLevelManagementGroupPrefix'), '/providers/Microsoft.Authorization/policyDefinitions/Append-AzureHub')]",
+                        "parameters": {}
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c",
+                        "policyDefinitionReferenceId": "Allowed-AzureRegions",
+                        "parameters": {
+                            "listOfAllowedLocations": {
+                                "value": [
+                                    "australiaeast",
+                                    "australiasoutheast"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/e765b5de-1225-4ba3-bd56-1ac6695af988",
+                        "policyDefinitionReferenceId": "Allowed-AzureRegions-Rg",
+                        "parameters": {
+                            "listOfAllowedLocations": {
+                                "value": [
+                                    "australiaeast",
+                                    "australiasoutheast"
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
